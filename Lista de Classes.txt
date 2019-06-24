@@ -1,0 +1,13 @@
+Classes para operações de CRUD como: insert, update, delete, filter e get.
+- ZCL_ZION_CUSTOMER: Cliente
+- ZCL_ZION_SUPPLIER: Fornecedor
+- ZCL_ZION_PRODUCT: Produto
+- ZCL_ZION_PO: Ordem de Compra
+- ZCL_ZION_VA: Ordem de Venda
+- ZCL_ZION_VL: Remessa
+- ZCL_ZION_VF: Faturamento
+
+Classes utilitárias
+- ZCL_ZION_ABSTRACT_ALV: Classe base para ALV
+- ZCL_ZION_TEXT_FORMATTER: Formatação e interpretação de textos
+- ZCL_ZION_METADATA: Extração de metadados
