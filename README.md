@@ -1,8 +1,5 @@
-# zionsap
-Classes utilitárias desenvolvidas na linguagem ABAP, feitas no MiniSAP
-
-## Instruções
-Todas as classes são feitas para copiar e colar de forma fácil na SE24
+# SAP
+Repositório para armezenar objetos desenvolvidos na linguagem ABAP, documentação etc.
 
 ## Como importar uma classe
 
