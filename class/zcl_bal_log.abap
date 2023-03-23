@@ -115,31 +115,31 @@ endmethod.
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method DISPLAY.
   CALL FUNCTION 'APPL_LOG_DISPLAY'
-   EXPORTING
-     OBJECT                               = me->log-object
-     SUBOBJECT                            = me->log-subobject
-     EXTERNAL_NUMBER                      = me->log-extnumber
-*     OBJECT_ATTRIBUTE                     = 0
-*     SUBOBJECT_ATTRIBUTE                  = 0
-*     EXTERNAL_NUMBER_ATTRIBUTE            = 0
-*     DATE_FROM                            = SY-DATUM
-*     TIME_FROM                            = '000000'
-*     DATE_TO                              = SY-DATUM
-*     TIME_TO                              = SY-UZEIT
-*     TITLE_SELECTION_SCREEN               = 'Teste'
-     TITLE_LIST_SCREEN                    = id_titlelist
-*     COLUMN_SELECTION                     = '11112221122   '
-     SUPPRESS_SELECTION_DIALOG            = 'X'
-*     COLUMN_SELECTION_MSG_JUMP            = '1'
-*     EXTERNAL_NUMBER_DISPLAY_LENGTH       = 20
-*     I_S_DISPLAY_PROFILE                  =
-*     I_VARIANT_REPORT                     = ' '
-*     I_SRT_BY_TIMSTMP                     = ' '
+    EXPORTING
+      OBJECT                         = me->log-object
+      SUBOBJECT                      = me->log-subobject
+      EXTERNAL_NUMBER                = me->log-extnumber
+*     OBJECT_ATTRIBUTE               = 0
+*     SUBOBJECT_ATTRIBUTE            = 0
+*     EXTERNAL_NUMBER_ATTRIBUTE      = 0
+*     DATE_FROM                      = SY-DATUM
+*     TIME_FROM                      = '000000'
+*     DATE_TO                        = SY-DATUM
+*     TIME_TO                        = SY-UZEIT
+*     TITLE_SELECTION_SCREEN         = 'Teste'
+      TITLE_LIST_SCREEN              = id_titlelist
+*     COLUMN_SELECTION               = '11112221122   '
+      SUPPRESS_SELECTION_DIALOG      = 'X'
+*     COLUMN_SELECTION_MSG_JUMP      = '1'
+*     EXTERNAL_NUMBER_DISPLAY_LENGTH = 20
+*     I_S_DISPLAY_PROFILE            =
+*     I_VARIANT_REPORT               = ' '
+*     I_SRT_BY_TIMSTMP               = ' '
 *   IMPORTING
-*     NUMBER_OF_PROTOCOLS                  =
-   EXCEPTIONS
-     NO_AUTHORITY                         = 1
-     OTHERS                               = 2.
+*     NUMBER_OF_PROTOCOLS            =
+    EXCEPTIONS
+      no_authority                   = 1
+      others                         = 2.
 endmethod.
 
 
@@ -151,14 +151,14 @@ endmethod.
 method SAVE.
   CALL FUNCTION 'BAL_DB_SAVE'
     EXPORTING
-      i_client               = sy-mandt
-      i_save_all             = abap_true
-      i_t_log_handle         = me->log_handle_tab
+      i_client         = sy-mandt
+      i_save_all       = abap_true
+      i_t_log_handle   = me->log_handle_tab
     EXCEPTIONS
-      log_not_found          = 1
-      save_not_allowed       = 2
-      numbering_error        = 3
-      OTHERS                 = 4.
+      log_not_found    = 1
+      save_not_allowed = 2
+      numbering_error  = 3
+      OTHERS           = 4.
 
   rd_subrc = sy-subrc.
 endmethod.
@@ -171,9 +171,9 @@ endmethod.
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SDEMO1.
   DATA ls_msg TYPE bal_s_msg.
-  DATA lo_obj TYPE REF TO zcl_test_bal_log.
+  DATA lo_obj TYPE REF TO zcl_bal_log.
 
-  lo_obj = new zcl_test_bal_log( id_object = id_object ).
+  lo_obj = new zcl_bal_log( id_object = id_object ).
 
   CLEAR ls_msg.
   ls_msg-msgty = 'E'.
@@ -246,30 +246,30 @@ endmethod.
 method SDISPLAY.
   CALL FUNCTION 'APPL_LOG_DISPLAY'
     EXPORTING
-      OBJECT                               = id_object
-      SUBOBJECT                            = id_subobject
-      EXTERNAL_NUMBER                      = id_extnumber
-*     OBJECT_ATTRIBUTE                     = 0
-*     SUBOBJECT_ATTRIBUTE                  = 0
-*     EXTERNAL_NUMBER_ATTRIBUTE            = 0
-*     DATE_FROM                            = SY-DATUM
-*     TIME_FROM                            = '000000'
-*     DATE_TO                              = SY-DATUM
-*     TIME_TO                              = SY-UZEIT
-*     TITLE_SELECTION_SCREEN               = 'Teste'
-     TITLE_LIST_SCREEN                    = id_titlelist
-*     COLUMN_SELECTION                     = '11112221122   '
-     SUPPRESS_SELECTION_DIALOG            = 'X'
-*     COLUMN_SELECTION_MSG_JUMP            = '1'
-*     EXTERNAL_NUMBER_DISPLAY_LENGTH       = 20
-*     I_S_DISPLAY_PROFILE                  =
-*     I_VARIANT_REPORT                     = ' '
-*     I_SRT_BY_TIMSTMP                     = ' '
+      OBJECT                         = id_object
+      SUBOBJECT                      = id_subobject
+      EXTERNAL_NUMBER                = id_extnumber
+*     OBJECT_ATTRIBUTE               = 0
+*     SUBOBJECT_ATTRIBUTE            = 0
+*     EXTERNAL_NUMBER_ATTRIBUTE      = 0
+*     DATE_FROM                      = SY-DATUM
+*     TIME_FROM                      = '000000'
+*     DATE_TO                        = SY-DATUM
+*     TIME_TO                        = SY-UZEIT
+*     TITLE_SELECTION_SCREEN         = 'Teste'
+      TITLE_LIST_SCREEN              = id_titlelist
+*     COLUMN_SELECTION               = '11112221122   '
+      SUPPRESS_SELECTION_DIALOG      = 'X'
+*     COLUMN_SELECTION_MSG_JUMP      = '1'
+*     EXTERNAL_NUMBER_DISPLAY_LENGTH = 20
+*     I_S_DISPLAY_PROFILE            =
+*     I_VARIANT_REPORT               = ' '
+*     I_SRT_BY_TIMSTMP               = ' '
 *   IMPORTING
-*     NUMBER_OF_PROTOCOLS                  =
-   EXCEPTIONS
-     NO_AUTHORITY                         = 1
-     OTHERS                               = 2.
+*     NUMBER_OF_PROTOCOLS            =
+    EXCEPTIONS
+      no_authority                   = 1
+      others                         = 2.
 endmethod.
 
 
@@ -307,10 +307,10 @@ method SDISPLAY_MSG_LIST.
   " Exibe
   CALL FUNCTION 'BAL_DSP_LOG_DISPLAY'
     EXCEPTIONS
-      PROFILE_INCONSISTENT = 1
-      INTERNAL_ERROR       = 2
-      NO_DATA_AVAILABLE    = 3
-      NO_AUTHORITY         = 4
-      OTHERS               = 5.
+      profile_inconsistent = 1
+      internal_error       = 2
+      no_data_available    = 3
+      no_authority         = 4
+      others               = 5.
 endmethod.
 ENDCLASS.
