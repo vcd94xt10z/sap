@@ -56,6 +56,10 @@ CLASS ZCL_BAL_LOG IMPLEMENTATION.
 * | [<-()] RD_SUBRC                       TYPE        SYSUBRC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method ADD_MSG.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   " Campos obrigatórios
   IF is_msg-msgid = ''.
     rd_subrc = 99.
@@ -85,6 +89,11 @@ endmethod.
 * | [EXC!] LOG_NOT_FOUND
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method CONSTRUCTOR.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+* Ultima atualização: 11/07/2023
+*
   me->log-object    = id_object.
   me->log-subobject = id_subobject.
   me->log-aluser    = sy-uname.
@@ -114,6 +123,10 @@ endmethod.
 * | [--->] ID_TITLELIST                   TYPE        ANY(optional)
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method DISPLAY.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   CALL FUNCTION 'APPL_LOG_DISPLAY'
     EXPORTING
       OBJECT                         = me->log-object
@@ -149,6 +162,10 @@ endmethod.
 * | [<-()] RD_SUBRC                       TYPE        SYSUBRC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SAVE.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   CALL FUNCTION 'BAL_DB_SAVE'
     EXPORTING
       i_client         = sy-mandt
@@ -170,6 +187,10 @@ endmethod.
 * | [--->] ID_OBJECT                      TYPE        BALOBJ_D
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SDEMO1.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   DATA ls_msg TYPE bal_s_msg.
   DATA lo_obj TYPE REF TO zcl_bal_log.
 
@@ -192,6 +213,10 @@ endmethod.
 * +-------------------------------------------------------------------------------------------------+
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SDEMO2.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   DATA: ld_pro TYPE char1.
   DATA: lt_msg TYPE bal_tt_msg.
   DATA: ls_msg LIKE LINE OF lt_msg.
@@ -244,6 +269,10 @@ endmethod.
 * | [--->] ID_TITLELIST                   TYPE        ANY(optional)
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SDISPLAY.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   CALL FUNCTION 'APPL_LOG_DISPLAY'
     EXPORTING
       OBJECT                         = id_object
@@ -279,6 +308,10 @@ endmethod.
 * | [--->] IT_MSG                         TYPE        BAL_TT_MSG
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SDISPLAY_MSG_LIST.
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   DATA ls_log TYPE bal_s_log.
   DATA ls_msg TYPE bal_s_msg.
 
