@@ -1,0 +1,22 @@
+Entre no link https://me.sap.com/softwarecenter, um login SAP com permissão para acesso a downloads será solicitado
+Procure por "sapjco"
+Baixe o arquivo mais recente do seu sistema operacional
+Dentro do zip, tem outro zip, extraia o zip arquivo interno para um local definitivo, exemplo C:\sapjco3-NTAMD64-3.0.12
+No Eclipse, crie um projeto Java, exemplo "TesteJco"
+Crie um pacote "main"
+Crie uma classe "Test.java" com método main
+Copie e cole a classe https://github.com/vcd94xt10z/sap/blob/master/jco/Test.java
+Configure o BuildPath do projeto, abra "Libraries", selecione "Modulepath" e clique em "Add External Jars..."
+Procure o local onde foi extraído o zip e selecione o arquivo "sapjco3.jar"
+Clique em Apply e Close
+No seu arquivo "module-info.java", adicione o conteúdo
+module TesteJco {
+	requires sapjco3;
+}
+Abra a classe Test.java e modifique o método createDestinationDataFile de acordo com as credenciais do seu ambiente
+Crie a função ZFM_TEST_RFC de acordo com o arquivo https://github.com/vcd94xt10z/sap/blob/master/jco/ZFM_TEST_RFC.abap
+Na função ZFM_TEST_RFC, mude o campo "Processing Type" para "Remote-Enabled Module"
+Salve e ative a função ZFM_TEST_RFC
+Volte no projeto Java e execute
+Caso queira testar com outra função, basta modificar a função na classe de acordo com os seus parâmetros
+Para mais informações, consulte a documentação que se encontra na pasta extraída "javadoc/intro.html"
