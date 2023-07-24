@@ -84,36 +84,58 @@ public class Test {
 	        function.execute(destination);
 	        
 	        // exportação: parâmetros simples
-	        System.out.println("exportação: parâmetros simples");
-	        System.out.println(function.getExportParameterList().getValue("ED_PARAM1"));
+	        System.out.print("exportacao - simples:    ");
+	        System.out.print(function.getExportParameterList().getValue("ED_PARAM1"));
+	        System.out.println("");
 	        
 	        // exportação: estruturas
-	        System.out.println("exportação: estruturas");
+	        System.out.print("exportacao - estruturas: ");
 	        JCoStructure structure1 = function.getExportParameterList().getStructure("ES_SAIRPORT");
-	        System.out.println(structure1.getValue("ID"));
-	        System.out.println(structure1.getValue("NAME"));
-	        System.out.println(structure1.getValue("TIME_ZONE"));
+	        System.out.print(structure1.getValue("ID")+", ");
+	        System.out.print(structure1.getValue("NAME")+", ");
+	        System.out.print(structure1.getValue("TIME_ZONE"));
+	        System.out.println("");
 	        
 	        // modificação: parâmetros simples
-	        System.out.println("changing: parâmetros simples");
-	        System.out.println(function.getChangingParameterList().getValue("CD_PARAM1"));
+	        System.out.print("changing - simples:      ");
+	        System.out.print(function.getChangingParameterList().getValue("CD_PARAM1"));
+	        System.out.println("");
 	        
 	        // modificação: estruturas
-	        System.out.println("changing: estruturas");
+	        System.out.print("changing - estruturas:   ");
 	        JCoStructure structure2 = function.getChangingParameterList().getStructure("CS_SAIRPORT");
-	        System.out.println(structure2.getValue("ID"));
-	        System.out.println(structure2.getValue("NAME"));
-	        System.out.println(structure2.getValue("TIME_ZONE"));
+	        System.out.print(structure2.getValue("ID")+", ");
+	        System.out.print(structure2.getValue("NAME")+", ");
+	        System.out.print(structure2.getValue("TIME_ZONE"));
+	        System.out.println("\n");
 	        
 	        // tabelas de saída
-	        System.out.println("tabelas de saída");
+	        System.out.println("tabelas de saida");
+	        
 	        JCoTable exportTable = function.getTableParameterList().getTable("ET_SAIRPORT");
-	        // jcoTable.getNumRows()
-	        // jcoTable.getFieldCount()
-	        exportTable.setRow(1);
-	        System.out.println(exportTable.getValue(1));
-	        System.out.println(exportTable.getValue(2));
-	        System.out.println(exportTable.getValue(3));
+	        
+	        System.out.println("ET_SAIRPORT ("+exportTable.getNumRows()+" linhas)");
+	        
+	        // cabeçalho
+	        System.out.println("-------------------------------------");
+        	for(int j=0;j < exportTable.getFieldCount();j++){
+        		String label = exportTable.getMetaData().getName(j);
+        		System.out.print("|");
+        		System.out.print(label+"\t");
+        	}
+        	System.out.println("|");
+        	System.out.println("-------------------------------------");
+	        
+	        for(int i=0;i < exportTable.getNumRows();i++){
+	        	exportTable.setRow(i);
+	        	
+	        	for(int j=0;j < exportTable.getFieldCount();j++){
+	        		Object value = exportTable.getValue(j);
+	        		System.out.print("|");
+        			System.out.print(value+"\t");
+	        	}
+	        	System.out.println("|");
+	        }
 	        
 		}catch(Exception e) {
 			e.printStackTrace();
