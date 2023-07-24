@@ -1,9 +1,17 @@
-1 - Instale o nodejs
-2 - Crie o diretório c:\nwrfcsdk
-3 - Defina a variável de ambiente SAPNWRFC_HOME=c:\nwrfcsdk
-4 - Baixe o arquivo do SAP NW RFC SDK "NWRFC_53-20004568.SAR"
-5 - Baixe o arquivo para descompactar o SAR "SAPCAR_1115-70006231.EXE"
-6 - Descompacte o arquivo dentro do diretório c:\nwrfcsdk
+Instale o SDK https://support.sap.com/en/product/connectors/nwrfcsdk.html
+- Crie o diretório c:\nwrfcsdk
+- Defina a variável de ambiente SAPNWRFC_HOME=c:\nwrfcsdk
+- Baixe o arquivo do SAP NW RFC SDK "NWRFC_53-20004568.SAR"
+- Baixe o arquivo para descompactar o SAR "SAPCAR_1115-70006231.EXE"
+- Descompacte o arquivo dentro do diretório c:\nwrfcsdk
 SAPCAR_1115-70006231.EXE -xv -R c:\ -f NWRFC_53-20004568.SAR
-7 - Inclua o diretório lib na variavel Path do Windows "SAPNWRFC_HOME\lib"
-8 - Reinicie o computador
+- Inclua o diretório lib na variavel Path do Windows "c:\nwrfcsdk\lib"
+
+Instale o Node.js e as dependências
+- Instale o Node.js
+- Instale o Python
+- Instale https://github.com/nodejs/node-gyp
+- Instale https://github.com/nodejs/node-rfc
+
+- Reinicie o computador
+- Pronto
