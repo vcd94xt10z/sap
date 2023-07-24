@@ -16,6 +16,7 @@ module TesteJco {
 Abra a classe Test.java e modifique o método createDestinationDataFile de acordo com as credenciais do seu ambiente
 Crie a função ZFM_TEST_RFC de acordo com o arquivo https://github.com/vcd94xt10z/sap/blob/master/jco/ZFM_TEST_RFC.abap
 Na função ZFM_TEST_RFC, mude o campo "Processing Type" para "Remote-Enabled Module"
+Todos os parâmetros da função devem ser passados por valor, não esqueça de marcar o flag!
 Salve e ative a função ZFM_TEST_RFC
 Volte no projeto Java e execute
 Caso queira testar com outra função, basta modificar a função na classe de acordo com os seus parâmetros
