@@ -2,7 +2,7 @@ FUNCTION ZFM_TEST_RFC.
 *"----------------------------------------------------------------------
 *"*"Local Interface:
 *"  IMPORTING
-*"     VALUE(ID_PARAM1) TYPE  CHAR10
+*"     VALUE(ID_PARAM1) TYPE  CHAR40
 *"     VALUE(IS_SAIRPORT) TYPE  SAIRPORT
 *"  EXPORTING
 *"     VALUE(ED_PARAM1) TYPE  DATS
@@ -16,6 +16,11 @@ FUNCTION ZFM_TEST_RFC.
 *"  EXCEPTIONS
 *"      ERRO1
 *"----------------------------------------------------------------------
+
+*
+* Autor Vinicius Cesar Dias
+* https://github.com/vcd94xt10z
+*
   ed_param1 = sy-datum.
 
   cd_param1 = 9.
