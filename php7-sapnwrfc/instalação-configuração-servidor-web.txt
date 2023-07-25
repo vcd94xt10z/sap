@@ -1,0 +1,35 @@
+setenforce 0
+vi /etc/selinux/config
+SELINUX=disabled
+
+systemctl stop firewalld
+systemctl disable firewalld
+yum update
+yum install httpd
+yum install php
+
+mkdir /webserver/
+mkdir /webserver/sites/localhost/public
+mkdir /webserver/vhosts
+vi /webserver/sites/localhost/public/index.php
+<?php
+phpinfo();
+?>
+
+vi /webserver/vhosts/localhost.conf
+<VirtualHost *:80>
+	ServerName localhost
+	DocumentRoot "/webserver/sites/localhost/public"
+	<Directory "/webserver/sites/localhost/public">
+	   Require all granted
+	   AllowOverride All
+	</Directory>
+</VirtualHost>
+
+vi /etc/httpd/conf/httpd.conf
+# Incluir no final do arquivo
+IncludeOptional /webserver/vhosts/*.conf
+service httpd start
+systemctl enable httpd
+
+# teste http://localhost
