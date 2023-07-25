@@ -32,4 +32,6 @@ IncludeOptional /webserver/vhosts/*.conf
 service httpd start
 systemctl enable httpd
 
+# recomendo que você reinicie o Linux agora
+
 # teste http://localhost
