@@ -2,6 +2,11 @@ Este passo a passo se aplica a um Linux Fedora Server x64
 O guia foi resumido do tutorial que se encontra em https://gkralik.github.io/php7-sapnwrfc/installation.html
 O passo a passo funcionou mesmo no PHP8
 
+Cenário
+Fedora Server 38 x64 rodando no VirtualBox
+Apache 2.4.57
+PHP 8.2.8
+
 Entre no link https://me.sap.com/softwarecenter, um login SAP com permissão para acesso a downloads será solicitado
 Procure pelo termo "NW RFC SDK 7.50" e baixe a versão adequada para o seu sistema operacional
 Extraia o zip para o diretório /usr/sap/nwrfcsdk
