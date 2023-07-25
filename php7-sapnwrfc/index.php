@@ -30,7 +30,9 @@ try {
 		]
     ]);
 
+	echo "<pre>";
     var_dump($result);
+	echo "</pre>";
 } catch(SapException $ex) {
     echo 'Exception: ' . $ex->getMessage() . PHP_EOL;
 }
