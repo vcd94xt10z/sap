@@ -7,8 +7,6 @@ systemctl disable firewalld
 yum update
 yum install httpd
 yum install php
-yum install php-devel
-yum install git
 
 mkdir /webserver/
 mkdir /webserver/sites/localhost/public
