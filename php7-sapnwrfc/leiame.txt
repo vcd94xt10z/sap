@@ -1,6 +1,6 @@
 Este passo a passo se aplica a um Linux Fedora Server x64
 O guia foi resumido do tutorial que se encontra em https://gkralik.github.io/php7-sapnwrfc/installation.html
-O passo a passo funcionou mesmo no PHP8
+O passo a passo funcionou mesmo no PHP 8
 
 Cenário
 Fedora Server 38 x64 rodando no VirtualBox
@@ -14,8 +14,10 @@ Crie o arquivo /etc/ld.so.conf.d/nwrfcsdk.conf com o conteúdo "/usr/sap/nwrfcsd
 Execute o comando "ldconfig"
 
 Crie um diretório na raiz do Linux "instalacao", entre e execute os comandos
+$ yum install git
 $ git clone https://github.com/gkralik/php7-sapnwrfc.git
 $ cd php7-sapnwrfc
+$ yum install php-devel
 $ phpize
 $ ./configure
 $ make
