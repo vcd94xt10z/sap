@@ -1,6 +1,12 @@
 # link do projeto original https://github.com/SAP/node-rfc
 # Ambiente: Fedora Server 38 x64
 
+Entre no link https://me.sap.com/softwarecenter, um login SAP com permissão para acesso a downloads será solicitado
+Procure pelo termo "NW RFC SDK 7.50" e baixe a versão adequada para o seu sistema operacional
+Extraia o zip para o diretório /usr/sap/nwrfcsdk
+Crie o arquivo /etc/ld.so.conf.d/nwrfcsdk.conf com o conteúdo "/usr/sap/nwrfcsdk/lib"
+Execute o comando "ldconfig"
+
 yum update
 yum install nodejs
 
