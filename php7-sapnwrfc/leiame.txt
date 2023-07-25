@@ -28,4 +28,6 @@ Reinicie o PHP
 
 Execute o comando "php -m" e verifique se o módulo "sapnwrfc" aparece na lista, indicando que deu certo
 
-Copie o arquivo "index.php" disponibilizado e faça um teste, execute com o comando "php index.php" e veja o resultado
+Copie o arquivo "index.php" disponibilizado
+Modifique os dados para o seu ambiente SAP
+Faça um teste acessando http://localhost e veja o resultado
