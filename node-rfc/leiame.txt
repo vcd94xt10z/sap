@@ -16,5 +16,7 @@ npm install node-rfc
 Baixe o arquivo index.js
 Copie e modifique o arquivo sapnwrfc.ini com os dados do seu ambiente
 
+Crie a função ZFM_TEST_RFC conforme arquivo do projeto
+
 Execute
 $ node index.js
