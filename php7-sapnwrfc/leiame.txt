@@ -1,1 +1,24 @@
-https://gkralik.github.io/php7-sapnwrfc/introduction.html
+Este passo a passo se aplica a um Linux Fedora Server x64
+O guia foi resumido do tutorial que se encontra em https://gkralik.github.io/php7-sapnwrfc/installation.html
+O passo a passo funcionou mesmo no PHP8
+
+Entre no link https://me.sap.com/softwarecenter, um login SAP com permissão para acesso a downloads será solicitado
+Procure pelo termo "NW RFC SDK 7.50" e baixe a versão adequada para o seu sistema operacional
+Extraia o zip para o diretório /usr/sap/nwrfcsdk
+Crie o arquivo /etc/ld.so.conf.d/nwrfcsdk.conf com o conteúdo "/usr/sap/nwrfcsdk/lib"
+Execute o comando "ldconfig"
+
+Crie um diretório na raiz do Linux "instalacao", entre e execute os comandos
+$ git clone https://github.com/gkralik/php7-sapnwrfc.git
+$ cd php7-sapnwrfc
+$ phpize
+$ ./configure
+$ make
+$ sudo make install
+
+Edite o arquivo /etc/php.ini e adicione a linha ao final "extension=sapnwrfc.so"
+Reinicie o PHP
+
+Execute o comando "php -m" e verifique se o módulo "sapnwrfc" aparece na lista, indicando que deu certo
+
+Copie o arquivo "index.php" disponibilizado e faça um teste, execute com o comando "php index.php" e veja o resultado
