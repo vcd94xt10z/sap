@@ -102,7 +102,7 @@ method IF_HTTP_EXTENSION~HANDLE_REQUEST.
     server->response->set_header_field(
       EXPORTING
         name  = 'Content-Type'
-        value = 'plain/text'
+        value = 'text/html'
     ).
 
     ld_response_body = 'Página não encontrada'.
