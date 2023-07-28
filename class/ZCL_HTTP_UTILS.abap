@@ -140,10 +140,16 @@ method REQUEST.
     if_http_request=>co_protocol_version_1_0
   ).
 
-*  CALL METHOD lo_http_client->request->if_http_entity~set_content_type
-*    EXPORTING
-*      content_type = 'multipart/form-data'.
-*
+  IF lines( is_request-data ) > 0.
+    READ TABLE is_request-header INTO ls_header WITH KEY name = 'Content-Type'.
+    IF sy-subrc <> 0.
+      CLEAR rs_response.
+      rs_response-status_code   = '400'.
+      rs_response-status_reason = 'Ao usar campos de formulário, o Content-Type deve ser definido'.
+      EXIT.
+    ENDIF.
+  ENDIF.
+
 *  CALL METHOD lo_http_client->request->if_http_entity~set_formfield_encoding
 *    EXPORTING
 *      formfield_encoding = cl_http_request=>if_http_entity~co_encoding_raw.
@@ -198,6 +204,7 @@ method REQUEST.
       IF ls_file-path IS NOT INITIAL.
         OPEN DATASET ls_file-path FOR INPUT IN BINARY MODE.
         READ DATASET ls_file-path INTO ls_file-content.
+        CLOSE DATASET ls_file-path.
       ENDIF.
 
       ld_len_xstring = xstrlen( ls_file-content ).
@@ -276,15 +283,15 @@ method REQUEST_TEST.
        , _id TYPE char100
        , END OF ly_retorno.
 
+  DATA: ld_json     TYPE string.
   DATA: ls_data     TYPE ihttpnvp.
   DATA: ls_file     TYPE my_property_file.
+  DATA: ls_header   TYPE ihttpnvp.
+  DATA: ls_retorno  TYPE ly_retorno.
   DATA: ls_request  TYPE my_request.
   DATA: ls_response TYPE my_response.
-
   DATA: ls_sairport TYPE sairport.
-  DATA: ls_retorno  TYPE ly_retorno.
   DATA: ld_base_url TYPE string.
-  DATA: ld_json     TYPE string.
 
   SELECT SINGLE *
     INTO ls_sairport
@@ -298,6 +305,12 @@ method REQUEST_TEST.
   " Requisição POST
   CLEAR ls_request.
   CLEAR ls_response.
+
+  CLEAR ls_header.
+  ls_header-name  = 'Content-Type'.
+  ls_header-value = 'application/json'.
+  APPEND ls_header TO ls_request-header.
+
   ls_request-url    = ld_base_url.
   ls_request-method = 'POST'.
   ls_request-body   = ld_json.
@@ -320,6 +333,12 @@ method REQUEST_TEST.
   " Requisição PUT
   CLEAR ls_request.
   CLEAR ls_response.
+
+  CLEAR ls_header.
+  ls_header-name  = 'Content-Type'.
+  ls_header-value = 'application/json'.
+  APPEND ls_header TO ls_request-header.
+
   ls_request-url    = |{ ld_base_url }/{ ls_retorno-_id }|.
   ls_request-method = 'PUT'.
   ls_request-body   = ld_json.
@@ -332,11 +351,9 @@ method REQUEST_TEST.
   ls_request-method = 'DELETE'.
   ls_response = zcl_http_utils=>request( is_request = ls_request ).
 
-  " Teste 3: Enviando dados via formulário
+  " Enviando dados via formulário
   CLEAR ls_request.
   CLEAR ls_response.
-  ls_request-url    = 'http://google.com'.
-  ls_request-method = 'POST'.
 
   CLEAR ls_data.
   ls_data-name = 'id'.
@@ -348,33 +365,39 @@ method REQUEST_TEST.
   ls_data-value = 'José da Silva'.
   APPEND ls_data TO ls_request-data.
 
+  CLEAR ls_header.
+  ls_header-name  = 'Content-Type'.
+  ls_header-value = 'multipart/form-data'.
+  APPEND ls_header TO ls_request-header.
+
+  ls_request-url    = 'https://httpbin.org/anything'.
+  ls_request-method = 'POST'.
   ls_response = zcl_http_utils=>request( is_request = ls_request ).
 
-  " Teste 6: Enviando arquivo de texto
+  " Enviando arquivo de texto
   CLEAR ls_request.
   CLEAR ls_response.
-  ls_request-url    = 'http://google.com'.
+  ls_request-url    = 'https://httpbin.org/anything'.
   ls_request-method = 'POST'.
 
   CLEAR ls_file.
   ls_file-name    = 'Arquivo.txt'.
   ls_file-mime    = 'plain/text'.
-  ls_file-content = 'Linha1' && cl_abap_char_utilities=>newline && 'Linha2'.
-  ls_file-path    = ''.
+  ls_file-path    = '/tmp/teste.txt'.
   INSERT ls_file INTO TABLE ls_request-file.
 
   ls_response = zcl_http_utils=>request( is_request = ls_request ).
 
-  " Teste 7: Enviando arquivo binário
+  " Enviando arquivo binário
   CLEAR ls_request.
   CLEAR ls_response.
-  ls_request-url    = 'http://google.com'.
+  ls_request-url    = 'https://httpbin.org/anything'.
   ls_request-method = 'POST'.
 
   CLEAR ls_file.
   ls_file-name    = 'Manual.pdf'.
   ls_file-mime    = 'application/pdf'.
-  ls_file-path    = 'c:\Windows\Temp\dummy.pdf'.
+  ls_file-path    = '/usr/share/cups/data/topsecret.pdf'.
   INSERT ls_file INTO TABLE ls_request-file.
 
   ls_response = zcl_http_utils=>request( is_request = ls_request ).
