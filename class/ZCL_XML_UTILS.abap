@@ -171,10 +171,24 @@ method DATA_TO_XML_MANUAL.
       APPEND '<item>' TO xmltab.
       LOOP AT lt_comp INTO ls_comp.
         ASSIGN COMPONENT ls_comp-name OF STRUCTURE <ls_data> TO <ld_value>.
-        ld_value = <ld_value>.
-        CONDENSE ld_value.
-        APPEND |<{ ls_comp-name }>{ ld_value }</{ ls_comp-name }>|
-            TO xmltab.
+
+        IF ls_comp-type_kind = cl_abap_typedescr=>typekind_struct1 OR
+           ls_comp-type_kind = cl_abap_typedescr=>typekind_struct2 OR
+           ls_comp-type_kind = cl_abap_typedescr=>typekind_table
+           .
+          data_to_xml_manual(
+            EXPORTING
+              data    = <ld_value>
+              tagname = CONV #( ls_comp-name )
+            CHANGING
+              xmltab = xmltab
+          ).
+        ELSE.
+          ld_value = <ld_value>.
+          CONDENSE ld_value.
+          APPEND |<{ ls_comp-name }>{ ld_value }</{ ls_comp-name }>|
+              TO xmltab.
+        ENDIF.
       ENDLOOP.
       APPEND '</item>' TO xmltab.
     ENDLOOP.
