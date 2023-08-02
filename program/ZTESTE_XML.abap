@@ -10,7 +10,7 @@ DATA: lt_sairport TYPE STANDARD TABLE OF sairport.
 START-OF-SELECTION.
   BREAK-POINT.
   PERFORM fill.
-  "PERFORM automatica.
+  PERFORM automatica.
   PERFORM manual.
 
 FORM fill.
