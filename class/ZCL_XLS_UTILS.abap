@@ -49,7 +49,7 @@ method CLASS_CONSTRUCTOR.
 *
 * Autor Vinicius Cesar Dias
 * https://github.com/vcd94xt10z
-* Ultima atualização 03/08/2023 v0.1
+* Ultima atualização 03/08/2023 v0.2
 *
 endmethod.
 
@@ -240,6 +240,17 @@ method OLE_XLS_TO_ITAB.
 
   FIELD-SYMBOLS: <ls_itab>  TYPE any.
   FIELD-SYMBOLS: <ld_field> TYPE any.
+
+  CALL FUNCTION 'FUNCTION_EXISTS'
+    EXPORTING
+      funcname           = 'ALSM_EXCEL_TO_INTERNAL_TABLE'
+    EXCEPTIONS
+      function_not_exist = 1
+      others             = 2.
+
+  IF sy-subrc <> 0.
+    RETURN.
+  ENDIF.
 
   CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
     EXPORTING
