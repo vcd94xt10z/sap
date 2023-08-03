@@ -6,21 +6,6 @@ class ZCL_XLS_UTILS definition
 public section.
 
   class-methods CLASS_CONSTRUCTOR .
-  class-methods OLE_ITAB_TO_XLS
-    importing
-      !ITAB type ANY TABLE
-      !XLS_FILE type STRING
-    exceptions
-      ERROR .
-  class-methods OLE_XLS_TO_ITAB
-    importing
-      !XLS_FILE type STRING
-      !I_END_ROW type INT4 default 65536
-      !I_END_COL type INT4 default 256
-    exporting
-      !ITAB type STANDARD TABLE
-    exceptions
-      ERROR .
   class-methods ITAB_TO_XLS
     importing
       value(ITAB) type ANY TABLE
@@ -49,7 +34,7 @@ method CLASS_CONSTRUCTOR.
 *
 * Autor Vinicius Cesar Dias
 * https://github.com/vcd94xt10z
-* Ultima atualização 03/08/2023 v0.2
+* Ultima atualização 03/08/2023 v0.3
 *
 endmethod.
 
@@ -74,8 +59,10 @@ method ITAB_TO_XLS.
   ASSIGN lr_data_ref->* TO <ls_data>.
 
   cl_salv_table=>factory(
-    IMPORTING r_salv_table = DATA(lo_table)
-    CHANGING  t_table      = <ls_data>
+    IMPORTING
+      r_salv_table = DATA(lo_table)
+    CHANGING
+      t_table      = <ls_data>
   ).
 
   DATA(lt_fcat) = cl_salv_controller_metadata=>get_lvc_fieldcatalog(
@@ -147,140 +134,6 @@ method ITAB_TO_XLS.
         others                    = 24
     ).
   ENDIF.
-endmethod.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_XLS_UTILS=>OLE_ITAB_TO_XLS
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] ITAB                           TYPE        ANY TABLE
-* | [--->] XLS_FILE                       TYPE        STRING
-* | [EXC!] ERROR
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-method OLE_ITAB_TO_XLS.
-  DATA: font        TYPE ole2_object.
-  DATA: book        TYPE ole2_object.
-  DATA: cell        TYPE ole2_object.
-  DATA: excel       TYPE ole2_object.
-  DATA: books       TYPE ole2_object.
-  DATA: sheet       TYPE ole2_object.
-  DATA: l_tabix     LIKE sy-tabix.
-  DATA: workbook    TYPE ole2_object.
-  DATA: application TYPE ole2_object.
-
-  FIELD-SYMBOLS <fs> TYPE any.
-
-  CREATE OBJECT excel 'EXCEL.APPLICATION'.
-  IF sy-subrc <> 0.
-    RAISE ERROR.
-  ENDIF.
-
-  CALL METHOD OF excel 'WORKBOOKS' = books.
-  IF sy-subrc <> 0.
-    RAISE ERROR.
-  ENDIF.
-
-  CALL METHOD OF books 'ADD' = book.
-  IF sy-subrc <> 0.
-    RAISE ERROR.
-  ENDIF.
-
-  CALL METHOD OF excel 'WORKSHEETS' = sheet.
-  IF sy-subrc <> 0.
-    RAISE ERROR.
-  ENDIF.
-
-  LOOP AT itab ASSIGNING <fs>.
-    l_tabix = sy-tabix.
-    DO.
-      ASSIGN COMPONENT sy-index OF STRUCTURE itab TO <fs>.
-      IF sy-subrc NE 0.
-        EXIT.
-      ENDIF.
-      CALL METHOD OF excel 'CELLS' = cell EXPORTING #1 = l_tabix #2 = sy-index.
-      SET PROPERTY OF cell 'VALUE' =   <fs>.
-    ENDDO.
-  ENDLOOP.
-
-  CALL METHOD OF book 'SaveAs'
-    EXPORTING
-      #1 = xls_file
-      #2 = 1.
-
-  IF sy-subrc <> 0.
-    RAISE ERROR.
-  ENDIF.
-
-  FREE  OBJECT  cell.
-  FREE  OBJECT  sheet.
-  FREE  OBJECT  book.
-  FREE  OBJECT  books.
-  FREE  OBJECT  excel.
-endmethod.
-
-
-* <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_XLS_UTILS=>OLE_XLS_TO_ITAB
-* +-------------------------------------------------------------------------------------------------+
-* | [--->] XLS_FILE                       TYPE        STRING
-* | [--->] I_END_ROW                      TYPE        INT4 (default =65536)
-* | [--->] I_END_COL                      TYPE        INT4 (default =256)
-* | [<---] ITAB                           TYPE        STANDARD TABLE
-* | [EXC!] ERROR
-* +--------------------------------------------------------------------------------------</SIGNATURE>
-method OLE_XLS_TO_ITAB.
-  TYPES: BEGIN OF alsmex_tabline
-       , row   TYPE kcd_ex_row_n
-       , col   TYPE kcd_ex_col_n
-       , value TYPE	char50
-       , END OF alsmex_tabline.
-
-  DATA: lt_intern TYPE STANDARD TABLE OF alsmex_tabline.
-  DATA: ls_intern TYPE alsmex_tabline.
-
-  FIELD-SYMBOLS: <ls_itab>  TYPE any.
-  FIELD-SYMBOLS: <ld_field> TYPE any.
-
-  CALL FUNCTION 'FUNCTION_EXISTS'
-    EXPORTING
-      funcname           = 'ALSM_EXCEL_TO_INTERNAL_TABLE'
-    EXCEPTIONS
-      function_not_exist = 1
-      others             = 2.
-
-  IF sy-subrc <> 0.
-    RETURN.
-  ENDIF.
-
-  CALL FUNCTION 'ALSM_EXCEL_TO_INTERNAL_TABLE'
-    EXPORTING
-      filename                = CONV rlgrap-filename( xls_file )
-      i_begin_col             = 1
-      i_begin_row             = 1
-      i_end_col               = i_end_col
-      i_end_row               = i_end_row
-    TABLES
-      intern                  = lt_intern
-    EXCEPTIONS
-      inconsistent_parameters = 1
-      upload_ole              = 2
-      others                  = 3.
-
-  IF sy-subrc <> 0.
-    RAISE ERROR.
-  ENDIF.
-
-  LOOP AT lt_intern INTO ls_intern.
-    READ TABLE itab ASSIGNING <ls_itab> INDEX ls_intern-row.
-    IF sy-subrc <> 0.
-      APPEND INITIAL LINE TO itab ASSIGNING <ls_itab>.
-    ENDIF.
-
-    ASSIGN COMPONENT ls_intern-col OF STRUCTURE <ls_itab> TO <ld_field>.
-    IF sy-subrc = 0.
-      <ld_field> = ls_intern-value.
-    ENDIF.
-  ENDLOOP.
 endmethod.
 
 
