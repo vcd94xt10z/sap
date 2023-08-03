@@ -1,4 +1,4 @@
-* Ultima atualização 03/08/2023 v0.3
+* Ultima atualização 03/08/2023 v0.4
 REPORT ZTESTE_XLS.
 
 DATA ld_file     TYPE string.
@@ -11,7 +11,7 @@ START-OF-SELECTION.
     INTO TABLE lt_sairport
     FROM sairport.
 
-  ld_file = 'C:\Windows\Temp\data.xls'.
+  ld_file = 'C:\Users\User\Desktop\XLS\data.xls'.
   "ld_file = '/tmp/data.xls'.
 
   zcl_xls_utils=>itab_to_xls(
@@ -33,3 +33,5 @@ START-OF-SELECTION.
     EXCEPTIONS
       others   = 1
   ).
+
+  BREAK-POINT.
