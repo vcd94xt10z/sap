@@ -40,7 +40,7 @@ method CLASS_CONSTRUCTOR.
 *
 * Autor Vinicius Cesar Dias
 * https://github.com/vcd94xt10z
-* Ultima atualização 04/08/2023 v0.1
+* Ultima atualização 04/08/2023 v0.2
 *
 endmethod.
 
@@ -207,6 +207,8 @@ method ITAB_TO_CSV.
     OPEN DATASET csv_file FOR OUTPUT IN BINARY MODE.
     IF sy-subrc = 0.
       LOOP AT lt_csv INTO ld_row.
+        CONCATENATE ld_row cl_abap_char_utilities=>newline
+               INTO ld_row.
         TRANSFER ld_row TO csv_file.
       ENDLOOP.
       CLOSE DATASET csv_file.
