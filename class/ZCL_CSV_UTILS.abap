@@ -40,7 +40,7 @@ method CLASS_CONSTRUCTOR.
 *
 * Autor Vinicius Cesar Dias
 * https://github.com/vcd94xt10z
-* Ultima atualização 04/08/2023 v0.2
+* Ultima atualização 04/08/2023 v0.4
 *
 endmethod.
 
@@ -62,6 +62,8 @@ method CSV_TO_ITAB.
   DATA: lo_csv_converter TYPE REF TO cl_rsda_csv_converter.
   DATA: lt_raw_data      TYPE ly_line_tab.
   DATA: ld_row           TYPE string.
+  DATA: lt_content       TYPE STANDARD TABLE OF string.
+  DATA: ld_content       TYPE string.
 
   FIELD-SYMBOLS: <ls_itab> TYPE any.
 
@@ -82,17 +84,30 @@ method CSV_TO_ITAB.
 
   IF server = 'X'.
     " lendo arquivo no servidor
+    CLEAR ld_content.
+    CLEAR lt_content.
+
     OPEN DATASET csv_file FOR INPUT IN BINARY MODE.
     IF sy-subrc <> 0.
       RETURN.
     ENDIF.
     DO.
-      READ DATASET csv_file INTO ld_row.
+      READ DATASET csv_file INTO ld_content.
       IF sy-subrc <> 0.
         EXIT.
       ENDIF.
-      APPEND ld_row TO lt_raw_data.
+      APPEND ld_content TO lt_content.
     ENDDO.
+
+    CONCATENATE LINES OF lt_content INTO ld_content.
+
+    SPLIT ld_content
+       AT cl_abap_char_utilities=>newline
+     INTO TABLE lt_raw_data.
+
+    CLEAR ld_content.
+    CLEAR lt_content.
+
     CLOSE DATASET csv_file.
   ELSE.
     CALL FUNCTION 'GUI_UPLOAD'
