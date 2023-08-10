@@ -4,8 +4,6 @@
 *
 REPORT ZTREE.
 
-INCLUDE ztree_class.
-
 DATA: gd_debug TYPE flag.
 DATA: go_tree  TYPE REF TO zcl_tree.
 DATA: gt_node  TYPE treemsunot.
