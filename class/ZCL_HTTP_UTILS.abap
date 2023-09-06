@@ -70,7 +70,7 @@ method CONSTRUCTOR.
 *
 * Autor Vinicius Cesar Dias
 * https://github.com/vcd94xt10z
-* Ultima atualização: 28/07/2023
+* Versão 0.2
 *
 endmethod.
 
@@ -172,18 +172,23 @@ method REQUEST.
   ELSE.
     " dados de formulário
     LOOP AT is_request-data INTO ls_data.
-      lo_part = lo_http_client->request->if_http_entity~add_multipart( ).
-      CONCATENATE 'form-data;name="' ls_data-name '"'
-             INTO ld_string.
+*      lo_part = lo_http_client->request->if_http_entity~add_multipart( ).
+*      CONCATENATE 'form-data;name="' ls_data-name '"'
+*             INTO ld_string.
+*
+*      CALL METHOD lo_part->set_header_field
+*        EXPORTING
+*          NAME  = 'content-disposition'
+*          VALUE = ld_string.
+*
+*      CALL METHOD lo_part->append_cdata
+*        EXPORTING
+*          DATA = ls_data-value.
 
-      CALL METHOD lo_part->set_header_field
+      CALL METHOD lo_http_client->request->set_form_field
         EXPORTING
-          NAME  = 'content-disposition'
-          VALUE = ld_string.
-
-      CALL METHOD lo_part->append_cdata
-        EXPORTING
-          DATA = ls_data-value.
+          name  = ls_data-name
+          value = ls_data-value.
     ENDLOOP.
 
     " arquivos da requisição (upload)
