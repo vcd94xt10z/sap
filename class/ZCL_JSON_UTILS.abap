@@ -37,7 +37,7 @@ method DATA_TO_JSON.
      AND methodname = 'SERIALIZE'.
 
   IF sy-subrc = 0.
-    CALL METHOD ('/UI2/CL_JSON=>SERIALIZE')
+    CALL METHOD ('/UI2/CL_JSON')=>('SERIALIZE')
       EXPORTING
         data   = ia_data
       RECEIVING
@@ -53,7 +53,7 @@ method DATA_TO_JSON.
      AND methodname = 'SERIALIZE'.
 
   IF sy-subrc = 0.
-    CALL METHOD ('ZCL_UI2_JSON=>SERIALIZE')
+    CALL METHOD ('ZCL_UI2_JSON')=>('SERIALIZE')
       EXPORTING
         data   = ia_data
       RECEIVING
@@ -81,7 +81,7 @@ method JSON_TO_DATA.
      AND methodname = 'DESERIALIZE'.
 
   IF sy-subrc = 0.
-    CALL METHOD ('/UI2/CL_JSON=>DESERIALIZE')
+    CALL METHOD ('/UI2/CL_JSON')=>('DESERIALIZE')
       EXPORTING
         json = iv_json
       CHANGING
@@ -97,7 +97,7 @@ method JSON_TO_DATA.
      AND methodname = 'DESERIALIZE'.
 
   IF sy-subrc = 0.
-    CALL METHOD ('ZCL_UI2_JSON=>DESERIALIZE')
+    CALL METHOD ('ZCL_UI2_JSON')=>('DESERIALIZE')
       EXPORTING
         json = iv_json
       CHANGING
