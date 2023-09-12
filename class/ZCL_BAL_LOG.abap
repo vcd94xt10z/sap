@@ -5,15 +5,20 @@ class ZCL_BAL_LOG definition
 
 public section.
 
+  types:
+    BEGIN OF my_key
+      , object    TYPE balobj_d
+      , subobject TYPE balsubobj
+      , extnumber TYPE balnrext
+      , END OF my_key .
+
   data LOG type BAL_S_LOG .
   data LOG_HANDLE type BALLOGHNDL .
   data LOG_HANDLE_TAB type BAL_T_LOGH .
 
   methods CONSTRUCTOR
     importing
-      !ID_OBJECT type BALOBJ_D
-      !ID_SUBOBJECT type BALSUBOBJ optional
-      !ID_EXTNUMBER type BALNREXT optional
+      !IS_KEY type MY_KEY
     exceptions
       LOG_NOT_FOUND .
   methods ADD_MSG
@@ -33,9 +38,7 @@ public section.
   class-methods SDEMO2 .
   class-methods SDISPLAY
     importing
-      !ID_OBJECT type BALOBJ_D
-      !ID_SUBOBJECT type BALSUBOBJ optional
-      !ID_EXTNUMBER type BALNREXT optional
+      !IS_KEY type MY_KEY
       !ID_TITLELIST type ANY optional .
   class-methods SDISPLAY_MSG_LIST
     importing
@@ -83,9 +86,7 @@ endmethod.
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Instance Public Method ZCL_BAL_LOG->CONSTRUCTOR
 * +-------------------------------------------------------------------------------------------------+
-* | [--->] ID_OBJECT                      TYPE        BALOBJ_D
-* | [--->] ID_SUBOBJECT                   TYPE        BALSUBOBJ(optional)
-* | [--->] ID_EXTNUMBER                   TYPE        BALNREXT(optional)
+* | [--->] IS_KEY                         TYPE        MY_KEY
 * | [EXC!] LOG_NOT_FOUND
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method CONSTRUCTOR.
@@ -94,11 +95,11 @@ method CONSTRUCTOR.
 * https://github.com/vcd94xt10z
 * Ultima atualização: 11/07/2023
 *
-  me->log-object    = id_object.
-  me->log-subobject = id_subobject.
+  me->log-object    = is_key-object.
+  me->log-subobject = is_key-subobject.
+  me->log-extnumber = is_key-extnumber.
   me->log-aluser    = sy-uname.
   me->log-alprog    = sy-repid.
-  me->log-extnumber = id_extnumber.
 
   CALL FUNCTION 'BAL_LOG_CREATE'
     EXPORTING
@@ -110,7 +111,8 @@ method CONSTRUCTOR.
       OTHERS                  = 2.
 
   IF sy-subrc <> 0.
-    RAISE LOG_NOT_FOUND.
+    "RAISE LOG_NOT_FOUND.
+    RETURN.
   ENDIF.
 
   INSERT me->log_handle INTO TABLE me->log_handle_tab.
@@ -193,8 +195,11 @@ method SDEMO1.
 *
   DATA ls_msg TYPE bal_s_msg.
   DATA lo_obj TYPE REF TO zcl_bal_log.
+  DATA ls_key TYPE my_key.
 
-  lo_obj = new zcl_bal_log( id_object = id_object ).
+  ls_key-object = id_object.
+
+  lo_obj = new zcl_bal_log( is_key = ls_key ).
 
   CLEAR ls_msg.
   ls_msg-msgty = 'E'.
@@ -263,9 +268,7 @@ endmethod.
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Static Public Method ZCL_BAL_LOG=>SDISPLAY
 * +-------------------------------------------------------------------------------------------------+
-* | [--->] ID_OBJECT                      TYPE        BALOBJ_D
-* | [--->] ID_SUBOBJECT                   TYPE        BALSUBOBJ(optional)
-* | [--->] ID_EXTNUMBER                   TYPE        BALNREXT(optional)
+* | [--->] IS_KEY                         TYPE        MY_KEY
 * | [--->] ID_TITLELIST                   TYPE        ANY(optional)
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SDISPLAY.
@@ -275,9 +278,9 @@ method SDISPLAY.
 *
   CALL FUNCTION 'APPL_LOG_DISPLAY'
     EXPORTING
-      OBJECT                         = id_object
-      SUBOBJECT                      = id_subobject
-      EXTERNAL_NUMBER                = id_extnumber
+      OBJECT                         = is_key-object
+      SUBOBJECT                      = is_key-subobject
+      EXTERNAL_NUMBER                = is_key-extnumber
 *     OBJECT_ATTRIBUTE               = 0
 *     SUBOBJECT_ATTRIBUTE            = 0
 *     EXTERNAL_NUMBER_ATTRIBUTE      = 0
