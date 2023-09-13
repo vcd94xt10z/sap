@@ -18,6 +18,18 @@ public section.
       !CD_MSGV2 type ANY
       !CD_MSGV3 type ANY
       !CD_MSGV4 type ANY .
+  class-methods LOAD_TEXT_OBJECT
+    importing
+      !IS_HEADER type THEAD
+    exporting
+      !ED_TEXT type ANY
+      !ET_TEXT type STANDARD TABLE .
+  class-methods SAVE_TEXT_OBJECT
+    importing
+      !IS_HEADER type THEAD
+      !IT_TEXT type STANDARD TABLE
+    returning
+      value(RD_SUBRC) type INT4 .
 protected section.
 private section.
 ENDCLASS.
@@ -25,6 +37,89 @@ ENDCLASS.
 
 
 CLASS ZCL_TEXT_UTILS IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_TEXT_UTILS=>LOAD_TEXT_OBJECT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_HEADER                      TYPE        THEAD
+* | [<---] ED_TEXT                        TYPE        ANY
+* | [<---] ET_TEXT                        TYPE        STANDARD TABLE
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method LOAD_TEXT_OBJECT.
+  DATA: lt_lines TYPE tline_tab
+      , ls_lines LIKE LINE OF lt_lines.
+
+  DATA: lt_text TYPE STANDARD TABLE OF string.
+
+  CALL FUNCTION 'READ_TEXT'
+    EXPORTING
+      id                      = is_header-tdid
+      language                = is_header-tdspras
+      name                    = is_header-tdname
+      object                  = is_header-tdobject
+    TABLES
+      lines                   = lt_lines
+    EXCEPTIONS
+      id                      = 1
+      language                = 2
+      name                    = 3
+      not_found               = 4
+      object                  = 5
+      reference_check         = 6
+      wrong_access_to_archive = 7.
+
+  " populando tabela de textos usada pelo componente
+  LOOP AT lt_lines INTO ls_lines.
+    APPEND ls_lines-tdline TO lt_text.
+  ENDLOOP.
+
+  IF ed_text IS SUPPLIED.
+    CONCATENATE LINES OF lt_text INTO ed_text
+      SEPARATED BY cl_abap_char_utilities=>newline.
+  ENDIF.
+
+  IF et_text IS SUPPLIED.
+    INSERT LINES OF lt_text INTO et_text.
+  ENDIF.
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_TEXT_UTILS=>SAVE_TEXT_OBJECT
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IS_HEADER                      TYPE        THEAD
+* | [--->] IT_TEXT                        TYPE        STANDARD TABLE
+* | [<-()] RD_SUBRC                       TYPE        INT4
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method SAVE_TEXT_OBJECT.
+  DATA: ld_text  TYPE string.
+  DATA: lt_text2 TYPE STANDARD TABLE OF tline.
+  DATA: ls_text2 LIKE LINE OF lt_text2.
+
+  " convertendo para o formato correto
+  LOOP AT it_text INTO ld_text.
+    ls_text2-tdformat = '*'.
+    ls_text2-tdline   = ld_text.
+    APPEND ls_text2 TO lt_text2.
+  ENDLOOP.
+
+  " salvando textos
+  CALL FUNCTION 'SAVE_TEXT'
+    EXPORTING
+      header          = is_header
+      savemode_direct = 'X'
+    TABLES
+      lines           = lt_text2
+    EXCEPTIONS
+      id       = 1
+      language = 2
+      name     = 3
+      object   = 4
+      others   = 5.
+
+  rd_subrc = sy-subrc.
+endmethod.
 
 
 * <SIGNATURE>---------------------------------------------------------------------------------------+
