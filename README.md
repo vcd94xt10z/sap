@@ -13,4 +13,4 @@ Acesse a Wiki https://github.com/vcd94xt10z/sap/wiki
 
 1) Entre na transação SE24 e informe o nome da classe, depois clique em Exibir
 2) Clique no botão "Baseado em texto fonte"
-3) Copie o conteúdo da classe e envie para o repositório com o nome do arquivo "ZCL_ZION_<NomeDaClasse>.abap"
+3) Copie o conteúdo da classe e envie para o repositório com o nome do arquivo sendo o nome da classe com a extensão ".abap"
