@@ -110,6 +110,8 @@ FORM process.
   CLEAR gt_data.
   gt_data = lt_data.
   CLEAR lt_data.
+
+  SORT gt_data BY tcode program ASCENDING.
 ENDFORM.
 FORM read_file.
   DATA: lt_line TYPE STANDARD TABLE OF string.
