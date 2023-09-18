@@ -145,4 +145,8 @@ FORM read_file.
      INTO gs_data-type gs_data-name.
     APPEND gs_data TO gt_data.
   ENDLOOP.
+
+  " ordenando e removendo duplicados
+  SORT gt_data BY type name ASCENDING.
+  DELETE ADJACENT DUPLICATES FROM gt_data COMPARING type name.
 ENDFORM.
