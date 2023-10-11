@@ -1,3 +1,4 @@
+* versão 0.1
 class ZCL_TEXTAREA definition
   public
   create public .
@@ -6,16 +7,17 @@ class ZCL_TEXTAREA definition
 *"* do not include other source files here!!!
 public section.
 
-  TYPES: BEGIN OF my_text_s
+  types:
+    BEGIN OF my_text_s
        , line TYPE char255
-       , END OF my_text_s.
-
-  TYPES: my_text_t TYPE STANDARD TABLE OF char255.
+       , END OF my_text_s .
+  types:
+    my_text_t TYPE STANDARD TABLE OF char255 .
 
   data MO_EDITOR type ref to CL_GUI_TEXTEDIT .
   data MO_CONTAINER type ref to CL_GUI_CUSTOM_CONTAINER .
   data MD_CONTAINER type CHAR255 .
-  data MT_TEXT_TMP type my_text_t.
+  data MT_TEXT_TMP type MY_TEXT_T .
 
   methods CALLME_IN_PBO .
   methods CONSTRUCTOR
@@ -30,7 +32,9 @@ public section.
   methods CLEAN_TEXT .
   methods SAVE_TEXT
     importing
-      value(IS_HEADER) type THEAD .
+      value(IS_HEADER) type THEAD
+    returning
+      value(RD_SUBRC) type SYSUBRC .
   methods LOAD_TEXT
     importing
       value(IS_HEADER) type THEAD .
@@ -187,6 +191,7 @@ ENDMETHOD.
 * | Instance Public Method ZCL_TEXTAREA->SAVE_TEXT
 * +-------------------------------------------------------------------------------------------------+
 * | [--->] IS_HEADER                      TYPE        THEAD
+* | [<-()] RD_SUBRC                       TYPE        SYSUBRC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method SAVE_TEXT.
   DATA: lt_text  TYPE my_text_t.
@@ -225,6 +230,8 @@ method SAVE_TEXT.
       name     = 3
       object   = 4
       others   = 5.
+
+  rd_subrc = sy-subrc.
 endmethod.
 
 
