@@ -1,3 +1,4 @@
+* versão 0.1
 class ZCL_TEXT_UTILS definition
   public
   create public .
@@ -50,8 +51,6 @@ method LOAD_TEXT_OBJECT.
   DATA: lt_lines TYPE tline_tab
       , ls_lines LIKE LINE OF lt_lines.
 
-  DATA: lt_text TYPE STANDARD TABLE OF string.
-
   CALL FUNCTION 'READ_TEXT'
     EXPORTING
       id                      = is_header-tdid
@@ -70,17 +69,18 @@ method LOAD_TEXT_OBJECT.
       wrong_access_to_archive = 7.
 
   " populando tabela de textos usada pelo componente
+  CLEAR ed_text.
   LOOP AT lt_lines INTO ls_lines.
-    APPEND ls_lines-tdline TO lt_text.
+    CONCATENATE ed_text ls_lines-tdline
+           INTO ed_text RESPECTING BLANKS.
   ENDLOOP.
 
-  IF ed_text IS SUPPLIED.
-    CONCATENATE LINES OF lt_text INTO ed_text
-      SEPARATED BY cl_abap_char_utilities=>newline.
-  ENDIF.
+  CLEAR et_text.
 
   IF et_text IS SUPPLIED.
-    INSERT LINES OF lt_text INTO et_text.
+    SPLIT ed_text
+       AT cl_abap_char_utilities=>newline
+     INTO TABLE et_text.
   ENDIF.
 endmethod.
 
