@@ -1,4 +1,4 @@
-* versão 0.1
+* versão 0.2
 class ZCL_TEXTAREA definition
   public
   create public .
@@ -11,8 +11,9 @@ public section.
     BEGIN OF my_text_s
        , line TYPE char255
        , END OF my_text_s .
-  types:
-    my_text_t TYPE STANDARD TABLE OF char255 .
+
+  "types: my_text_t TYPE STANDARD TABLE OF char255 .
+  types: my_text_t TYPE STANDARD TABLE OF zmkpcharmax_e.
 
   data MO_EDITOR type ref to CL_GUI_TEXTEDIT .
   data MO_CONTAINER type ref to CL_GUI_CUSTOM_CONTAINER .
@@ -145,9 +146,10 @@ endmethod.
 * | [--->] IS_HEADER                      TYPE        THEAD
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 METHOD load_text.
-  DATA: lt_lines TYPE tline_tab
-      , ls_lines LIKE LINE OF lt_lines.
-  DATA: lt_text  TYPE my_text_t.
+  DATA: lt_lines  TYPE tline_tab
+      , ls_lines  LIKE LINE OF lt_lines.
+  DATA: lt_text   TYPE my_text_t.
+  DATA: ld_string TYPE string.
 
   me->clean_text( ).
 
@@ -170,9 +172,15 @@ METHOD load_text.
       wrong_access_to_archive = 7.
 
   " populando tabela de textos usada pelo componente
+  CLEAR ld_string.
   LOOP AT lt_lines INTO ls_lines.
-    APPEND ls_lines-tdline TO lt_text.
+    CONCATENATE ld_string ls_lines-tdline
+           INTO ld_string RESPECTING BLANKS.
   ENDLOOP.
+
+  " devolvendo a linha e deixando o textarea fazer as quebras automaticamente
+  CLEAR lt_text.
+  APPEND ld_string TO lt_text.
 
   IF me->mo_editor IS NOT BOUND.
     " guardando texto para ser carregado depois
@@ -199,6 +207,13 @@ method SAVE_TEXT.
   DATA: lt_text2 TYPE STANDARD TABLE OF tline.
   DATA: ls_text2 LIKE LINE OF lt_text2.
 
+  DATA: ld_buffer TYPE string.
+  DATA: ld_string TYPE string.
+  DATA: ld_index  TYPE int4.
+  DATA: ld_size   TYPE int4.
+  DATA: ld_char   TYPE char1.
+  DATA: ld_line   TYPE string.
+
   IF me->mo_editor IS NOT BOUND.
     RETURN.
   ENDIF.
@@ -210,12 +225,49 @@ method SAVE_TEXT.
     EXCEPTIONS
       OTHERS = 1.
 
-  " convertendo para o formato correto
-  LOOP AT lt_text INTO ls_text.
-    ls_text2-tdformat = '*'.
-    ls_text2-tdline   = ls_text.
-    APPEND ls_text2 TO lt_text2.
+  " juntando linhas em uma única string
+  CLEAR ld_string.
+  LOOP AT lt_text INTO ld_line.
+    IF ld_line = ''.
+      " o componente textarea separa as linhas com uma linha em branco.
+      " Para representar corretamente, é necessário inserir duas quebras de linha
+      CONCATENATE ld_string
+                  cl_abap_char_utilities=>newline
+                  cl_abap_char_utilities=>newline
+             INTO ld_string RESPECTING BLANKS.
+    ELSE.
+      CONCATENATE ld_string ld_line
+             INTO ld_string RESPECTING BLANKS.
+    ENDIF.
   ENDLOOP.
+  CONDENSE ld_string.
+
+  " quebrando string em padaços de texto
+  ld_size = strlen( ld_string ).
+  ld_buffer = ''.
+  DO ld_size TIMES.
+    ld_index = sy-index - 1.
+    ld_char = ld_string+ld_index(1).
+    CONCATENATE ld_buffer ld_char
+           INTO ld_buffer RESPECTING BLANKS.
+
+    IF strlen( ld_buffer ) = 132.
+      CLEAR ls_text2.
+      ls_text2-tdformat = '*'.
+      ls_text2-tdline   = ld_buffer.
+      APPEND ls_text2 TO lt_text2.
+      CLEAR ld_buffer.
+    ENDIF.
+  ENDDO.
+
+  " se sobrar algo no buffer no final, adiciona o resto
+  IF ld_buffer <> ''.
+    CLEAR ls_text2.
+    ls_text2-tdformat = '*'.
+    ls_text2-tdline   = ld_buffer.
+    APPEND ls_text2 TO lt_text2.
+    CLEAR ld_buffer.
+  ENDIF.
 
   " salvando textos
   CALL FUNCTION 'SAVE_TEXT'
@@ -225,11 +277,11 @@ method SAVE_TEXT.
     TABLES
       lines           = lt_text2
     EXCEPTIONS
-      id       = 1
-      language = 2
-      name     = 3
-      object   = 4
-      others   = 5.
+      id              = 1
+      language        = 2
+      name            = 3
+      object          = 4
+      others          = 5.
 
   rd_subrc = sy-subrc.
 endmethod.
