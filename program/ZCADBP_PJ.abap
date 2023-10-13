@@ -1,3 +1,4 @@
+* versão 0.2
 REPORT ZCADBP_PJ.
 
 SELECTION-SCREEN BEGIN OF BLOCK main WITH FRAME TITLE text-001.
@@ -7,7 +8,7 @@ SELECTION-SCREEN BEGIN OF BLOCK main WITH FRAME TITLE text-001.
   PARAMETERS p_cnpj  TYPE char14.
   PARAMETERS p_ie    TYPE char14.
   PARAMETERS p_im    TYPE char14.
-  PARAMETERS p_pernr TYPE PERSNO.
+  PARAMETERS p_pernr TYPE persno.
 SELECTION-SCREEN END OF BLOCK main.
 
 SELECTION-SCREEN BEGIN OF BLOCK addr WITH FRAME TITLE text-002.
@@ -35,7 +36,7 @@ SELECTION-SCREEN BEGIN OF BLOCK company WITH FRAME TITLE text-004.
   PARAMETERS p_akont TYPE akont.  " Conta de reconciliação
   PARAMETERS p_fdgrv TYPE fdgrv.  " Planning Group
   PARAMETERS p_zwels TYPE dzwels. " Métodos de pagamento
-  PARAMETERS p_vzskz TYPE dzwels. " Interest Indicator
+  PARAMETERS p_vzskz TYPE vzskz.  " Interest Indicator
 SELECTION-SCREEN END OF BLOCK company.
 
 SELECTION-SCREEN BEGIN OF BLOCK sales WITH FRAME TITLE text-004.
@@ -361,6 +362,14 @@ START-OF-SELECTION.
   " aba: status
   <ls_sales>-datax-aufsd     = 'X'.
   <ls_sales>-datax-cassd     = 'X'.
+
+  " dados de venda: IVA liquidado (output tax)
+  APPEND INITIAL LINE TO s_bp-customer-central_data-tax_ind-tax_ind ASSIGNING FIELD-SYMBOL(<ls_tax_ind>).
+  <ls_tax_ind>-task           = 'I'.
+  <ls_tax_ind>-data_key-aland = 'BR'.
+  <ls_tax_ind>-data_key-tatyp = 'IBRX'.
+  <ls_tax_ind>-data-taxkd     = '1'.
+  <ls_tax_ind>-datax-taxkd    = 'X' .
 
   BREAK-POINT.
 
