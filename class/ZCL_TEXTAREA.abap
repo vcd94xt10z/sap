@@ -1,4 +1,4 @@
-* versão 0.2
+* versão 0.3
 class ZCL_TEXTAREA definition
   public
   create public .
@@ -73,7 +73,7 @@ METHOD callme_in_pbo.
     CREATE OBJECT me->mo_editor
       EXPORTING
         parent                     = me->mo_container
-        wordwrap_mode              = cl_gui_textedit=>wordwrap_off " cl_gui_textedit=>wordwrap_at_fixed_position
+        wordwrap_mode              = cl_gui_textedit=>wordwrap_at_windowborder " cl_gui_textedit=>wordwrap_at_fixed_position
         wordwrap_to_linebreak_mode = cl_gui_textedit=>false        " cl_gui_textedit=>true
       EXCEPTIONS
         OTHERS                     = 1.
