@@ -1,3 +1,7 @@
+*
+* Autor Vinicius Cesar Dias
+* Versão 0.1
+*
 REPORT ZBOPF.
 
 START-OF-SELECTION.
@@ -18,6 +22,8 @@ START-OF-SELECTION.
   PERFORM delete.
 
 FORM create.
+  CLEAR lt_item.
+
   CLEAR ls_header.
   ls_header-soid       = 0.
   ls_header-customerid = '1'.
@@ -39,6 +45,7 @@ FORM create.
   ls_item-price_uni = `2.00`.
   APPEND ls_item TO lt_item.
 
+  CLEAR lt_message.
   lo_api->create(
     EXPORTING
       is_header  = ls_header
@@ -52,9 +59,13 @@ FORM create.
       it_return = lt_message.
 ENDFORM.
 FORM read.
+  CLEAR ls_header.
+  CLEAR lt_item.
+
+  CLEAR lt_message.
   lo_api->read_single(
     EXPORTING
-      id_soid    = 1
+      id_soid    = 45
     IMPORTING
       es_header  = ls_header
       et_item    = lt_item
@@ -65,6 +76,7 @@ FORM read.
     TABLES
       it_return = lt_message.
 
+  CLEAR lt_message.
   lo_api->read_all(
     IMPORTING
       et_header  = lt_header
@@ -72,8 +84,10 @@ FORM read.
   ).
 ENDFORM.
 FORM update.
+  CLEAR lt_item.
+
   CLEAR ls_header.
-  ls_header-soid       = 1.
+  ls_header-soid       = 45.
   ls_header-customerid = '90'.
   ls_header-status     = 'F'.
 
@@ -104,6 +118,7 @@ FORM update.
 *  ls_item-price_uni = `3`.
 *  APPEND ls_item TO lt_item.
 
+  CLEAR lt_message.
   lo_api->update(
     EXPORTING
       is_header  = ls_header
@@ -117,9 +132,10 @@ FORM update.
       it_return = lt_message.
 ENDFORM.
 FORM delete.
+  CLEAR lt_message.
   lo_api->delete(
     EXPORTING
-      id_soid    = 1
+      id_soid    = 45
     IMPORTING
       et_message = lt_message
   ).
