@@ -7,8 +7,8 @@ public section.
   methods CONSTRUCTOR .
   methods CREATE
     importing
-      !IS_HEADER type ZBO_SOHEADER_DS
-      !IT_ITEM type ZBO_SOITEM_DS_TAB
+      !IS_HEADER type ZBO_SOHEADER_CB
+      !IT_ITEM type ZBO_SOITEM_CTT
     exporting
       !ET_MESSAGE type BAPIRET2_T .
   methods DELETE
@@ -29,8 +29,8 @@ public section.
       !ET_MESSAGE type BAPIRET2_T .
   methods UPDATE
     importing
-      !IS_HEADER type ZBO_SOHEADER_DS
-      !IT_ITEM type ZBO_SOITEM_DS_TAB
+      !IS_HEADER type ZBO_SOHEADER_CB
+      !IT_ITEM type ZBO_SOITEM_CTT
     exporting
       !ET_MESSAGE type BAPIRET2_T .
 protected section.
@@ -143,8 +143,8 @@ endmethod.
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Instance Public Method ZCL_BOPF_SO_API->CREATE
 * +-------------------------------------------------------------------------------------------------+
-* | [--->] IS_HEADER                      TYPE        ZBO_SOHEADER_DS
-* | [--->] IT_ITEM                        TYPE        ZBO_SOITEM_DS_TAB
+* | [--->] IS_HEADER                      TYPE        ZBO_SOHEADER_CB
+* | [--->] IT_ITEM                        TYPE        ZBO_SOITEM_CTT
 * | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method CREATE.
@@ -704,8 +704,8 @@ endmethod.
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Instance Public Method ZCL_BOPF_SO_API->UPDATE
 * +-------------------------------------------------------------------------------------------------+
-* | [--->] IS_HEADER                      TYPE        ZBO_SOHEADER_DS
-* | [--->] IT_ITEM                        TYPE        ZBO_SOITEM_DS_TAB
+* | [--->] IS_HEADER                      TYPE        ZBO_SOHEADER_CB
+* | [--->] IT_ITEM                        TYPE        ZBO_SOITEM_CTT
 * | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method UPDATE.
