@@ -1,6 +1,6 @@
 *
 * Autor Vinicius Cesar Dias
-* Versão 0.1
+* Versão 0.2
 *
 class ZCL_BOPF_SO_API definition
   public
@@ -8,6 +8,12 @@ class ZCL_BOPF_SO_API definition
 
 public section.
 
+  methods ACTION
+    importing
+      !ID_ACTION type /BOBF/ACT_KEY
+      !ID_SOID type INT4
+    exporting
+      !ET_MESSAGE type BAPIRET2_T .
   methods CONSTRUCTOR .
   methods CREATE
     importing
@@ -20,16 +26,16 @@ public section.
       !ID_SOID type INT4
     exporting
       !ET_MESSAGE type BAPIRET2_T .
+  methods READ_ALL
+    exporting
+      !ET_HEADER type ZBO_SOHEADER_CTT
+      !ET_MESSAGE type BAPIRET2_T .
   methods READ_SINGLE
     importing
       !ID_SOID type INT4
     exporting
       !ES_HEADER type ZBO_SOHEADER_CB
       !ET_ITEM type ZBO_SOITEM_CTT
-      !ET_MESSAGE type BAPIRET2_T .
-  methods READ_ALL
-    exporting
-      !ET_HEADER type ZBO_SOHEADER_CTT
       !ET_MESSAGE type BAPIRET2_T .
   methods UPDATE
     importing
@@ -99,6 +105,91 @@ ENDCLASS.
 
 
 CLASS ZCL_BOPF_SO_API IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Public Method ZCL_BOPF_SO_API->ACTION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ID_ACTION                      TYPE        /BOBF/ACT_KEY
+* | [--->] ID_SOID                        TYPE        INT4
+* | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method ACTION.
+  DATA lv_soid_key   TYPE /bobf/conf_key.
+  DATA lt_mod        TYPE /bobf/t_frw_modification.
+  DATA lo_change     TYPE REF TO /bobf/if_tra_change.
+  DATA lo_message    TYPE REF TO /bobf/if_frw_message.
+  DATA lv_rejected   TYPE boole_d.
+  DATA lx_bopf_ex    TYPE REF TO /bobf/cx_frw.
+  DATA lv_err_msg    TYPE string.
+
+  DATA lr_s_root     TYPE REF TO zbo_soheader_cb.
+  DATA lr_s_item     TYPE REF TO zbo_soitem_cs.
+  DATA ls_message    LIKE LINE OF et_message.
+
+  DATA ls_header     TYPE zbo_soheader_cb.
+  DATA lt_key        TYPE /bobf/t_frw_key.
+
+  FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
+
+  CLEAR et_message.
+
+  TRY.
+    me->read_single(
+      EXPORTING
+        id_soid    = id_soid
+      IMPORTING
+        es_header  = ls_header
+    ).
+
+    me->mo_svc_mngr->do_action(
+      EXPORTING
+        iv_act_key = id_action
+        it_key     = VALUE #( ( key = ls_header-key ) )
+      IMPORTING
+        eo_message = lo_message
+    ).
+
+    IF lo_message IS BOUND.
+      IF lo_message->check( ) EQ abap_true.
+        me->convert_messages(
+          EXPORTING
+            io_message = lo_message
+          IMPORTING
+            et_message = et_message
+        ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    CALL METHOD me->mo_txn_mngr->save
+      IMPORTING
+        eo_message  = lo_message
+        ev_rejected = lv_rejected.
+
+    IF lv_rejected EQ abap_true.
+      me->convert_messages(
+        EXPORTING
+          io_message = lo_message
+        IMPORTING
+          et_message = et_message
+      ).
+      RETURN.
+    ENDIF.
+
+    CLEAR ls_message.
+    ls_message-type    = 'S'.
+    ls_message-message = 'Ação executada'.
+    APPEND ls_message TO et_message.
+  CATCH /bobf/cx_frw INTO lx_bopf_ex.
+    lv_err_msg = lx_bopf_ex->get_text( ).
+
+    CLEAR ls_message.
+    ls_message-type    = 'E'.
+    ls_message-message = lv_err_msg.
+    APPEND ls_message TO et_message.
+  ENDTRY.
+endmethod.
 
 
 * <SIGNATURE>---------------------------------------------------------------------------------------+
