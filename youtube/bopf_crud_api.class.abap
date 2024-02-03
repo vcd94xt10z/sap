@@ -26,7 +26,6 @@ public section.
   methods READ_ALL
     exporting
       !ET_HEADER type ZBO_SOHEADER_CTT
-      !ET_ITEM type ZBO_SOITEM_CTT
       !ET_MESSAGE type BAPIRET2_T .
   methods UPDATE
     importing
@@ -51,9 +50,11 @@ private section.
       !IV_KEY type /BOBF/CONF_KEY
       !IV_NODE_KEY type /BOBF/OBM_NODE_KEY
       !IV_EDIT_MODE type /BOBF/CONF_EDIT_MODE default /BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY
-      !IV_INDEX type I default 1
+      !IV_INDEX type I optional
     returning
-      value(RR_DATA) type ref to DATA .
+      value(RR_DATA) type ref to DATA
+    raising
+      /BOBF/CX_DAC .
   methods GET_NODE_ROW_BY_ASSOC
     importing
       !IV_KEY type /BOBF/CONF_KEY
@@ -62,14 +63,18 @@ private section.
       !IV_EDIT_MODE type /BOBF/CONF_EDIT_MODE default                                   /BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY
       !IV_INDEX type I optional
     returning
-      value(RR_DATA) type ref to DATA .
+      value(RR_DATA) type ref to DATA
+    raising
+      /BOBF/CX_DAC .
   methods GET_NODE_TABLE
     importing
       !IV_KEY type /BOBF/CONF_KEY
       !IV_NODE_KEY type /BOBF/OBM_NODE_KEY
       !IV_EDIT_MODE type /BOBF/CONF_EDIT_MODE default /BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY
     returning
-      value(RR_DATA) type ref to DATA .
+      value(RR_DATA) type ref to DATA
+    raising
+      /BOBF/CX_DAC .
   methods GET_NODE_TABLE_BY_ASSOC
     importing
       !IV_KEY type /BOBF/CONF_KEY
@@ -77,7 +82,9 @@ private section.
       !IV_ASSOC_KEY type /BOBF/OBM_ASSOC_KEY
       !IV_EDIT_MODE type /BOBF/CONF_EDIT_MODE default /BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY
     returning
-      value(RR_DATA) type ref to DATA .
+      value(RR_DATA) type ref to DATA
+    raising
+      /BOBF/CX_DAC .
   methods GET_SOID_KEY
     importing
       !ID_SOID type INT4
@@ -108,16 +115,27 @@ endmethod.
 * | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method CONVERT_MESSAGES.
-  DATA lt_messages TYPE /bobf/t_frw_message_k.
+  DATA lt_message  TYPE /bobf/t_frw_message_k.
   DATA lv_msg_text TYPE string.
-  FIELD-SYMBOLS <ls_message> LIKE LINE OF lt_messages.
+  DATA ls_message  LIKE LINE OF et_message.
 
-  CHECK io_message IS BOUND.
+  FIELD-SYMBOLS <ls_message> LIKE LINE OF lt_message.
 
-  io_message->get_messages( IMPORTING et_message = lt_messages ).
-  LOOP AT lt_messages ASSIGNING <ls_message>.
+  IF io_message IS NOT BOUND.
+    RETURN.
+  ENDIF.
+
+  CALL METHOD io_message->get_messages
+    IMPORTING
+      et_message = lt_message.
+
+  LOOP AT lt_message ASSIGNING <ls_message>.
     lv_msg_text = <ls_message>-message->get_text( ).
-    WRITE: / lv_msg_text.
+
+    CLEAR ls_message.
+    ls_message-type    = <ls_message>-severity.
+    ls_message-message = lv_msg_text.
+    APPEND ls_message TO et_message.
   ENDLOOP.
 endmethod.
 
@@ -218,7 +236,7 @@ method CREATE.
 
     CLEAR ls_messsage.
     ls_messsage-type    = 'S'.
-    ls_messsage-message = 'Cadastro efetuado com sucesso'.
+    ls_messsage-message = 'Instância criada'.
     APPEND ls_messsage TO et_message.
   CATCH /bobf/cx_frw INTO lx_bopf_ex.
     lv_err_msg = lx_bopf_ex->get_text( ).
@@ -238,20 +256,20 @@ endmethod.
 * | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method DELETE.
-  DATA lt_mod          TYPE /bobf/t_frw_modification.
-  DATA lo_change       TYPE REF TO /bobf/if_tra_change.
-  DATA lo_message      TYPE REF TO /bobf/if_frw_message.
-  DATA lv_rejected     TYPE boole_d.
-  DATA lx_bopf_ex      TYPE REF TO /bobf/cx_frw.
-  DATA lv_err_msg      TYPE string.
+  DATA lt_mod        TYPE /bobf/t_frw_modification.
+  DATA lo_change     TYPE REF TO /bobf/if_tra_change.
+  DATA lo_message    TYPE REF TO /bobf/if_frw_message.
+  DATA lv_rejected   TYPE boole_d.
+  DATA lx_bopf_ex    TYPE REF TO /bobf/cx_frw.
+  DATA lv_err_msg    TYPE string.
 
-  DATA lr_s_root       TYPE REF TO zbo_soheader_cb.
-  DATA lr_s_item       TYPE REF TO zbo_soitem_cs.
-  DATA ls_message      LIKE LINE OF et_message.
+  DATA lr_s_root     TYPE REF TO zbo_soheader_cb.
+  DATA lr_s_item     TYPE REF TO zbo_soitem_cs.
+  DATA ls_message    LIKE LINE OF et_message.
 
-  DATA ls_header_ori   TYPE zbo_soheader_cb.
-  DATA lt_item_ori     TYPE zbo_soitem_ctt.
-  DATA ls_item_ori     LIKE LINE OF lt_item_ori.
+  DATA ls_header_ori TYPE zbo_soheader_cb.
+  DATA lt_item_ori   TYPE zbo_soitem_ctt.
+  DATA ls_item_ori   LIKE LINE OF lt_item_ori.
 
   FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
 
@@ -332,8 +350,9 @@ endmethod.
 * | [--->] IV_KEY                         TYPE        /BOBF/CONF_KEY
 * | [--->] IV_NODE_KEY                    TYPE        /BOBF/OBM_NODE_KEY
 * | [--->] IV_EDIT_MODE                   TYPE        /BOBF/CONF_EDIT_MODE (default =/BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY)
-* | [--->] IV_INDEX                       TYPE        I (default =1)
+* | [--->] IV_INDEX                       TYPE        I(optional)
 * | [<-()] RR_DATA                        TYPE REF TO DATA
+* | [!CX!] /BOBF/CX_DAC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method GET_NODE_ROW.
   DATA lr_t_data TYPE REF TO data.
@@ -352,11 +371,16 @@ method GET_NODE_ROW.
   ENDIF.
 
   ASSIGN lr_t_data->* TO <lt_data>.
-  READ TABLE <lt_data> INDEX iv_index ASSIGNING <ls_row>.
-  IF sy-subrc EQ 0.
-    GET REFERENCE OF <ls_row> INTO rr_data.
+
+  IF iv_index IS SUPPLIED.
+    READ TABLE <lt_data> INDEX iv_index ASSIGNING <ls_row>.
+    IF sy-subrc EQ 0.
+      GET REFERENCE OF <ls_row> INTO rr_data.
+    ELSE.
+      RAISE EXCEPTION TYPE /bobf/cx_dac.
+    ENDIF.
   ELSE.
-    RAISE EXCEPTION TYPE /bobf/cx_dac.
+    rr_data = lr_t_data.
   ENDIF.
 endmethod.
 
@@ -370,6 +394,7 @@ endmethod.
 * | [--->] IV_EDIT_MODE                   TYPE        /BOBF/CONF_EDIT_MODE (default =                                  /BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY)
 * | [--->] IV_INDEX                       TYPE        I(optional)
 * | [<-()] RR_DATA                        TYPE REF TO DATA
+* | [!CX!] /BOBF/CX_DAC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method GET_NODE_ROW_BY_ASSOC.
   DATA lr_t_data TYPE REF TO data.
@@ -409,12 +434,12 @@ endmethod.
 * | [--->] IV_NODE_KEY                    TYPE        /BOBF/OBM_NODE_KEY
 * | [--->] IV_EDIT_MODE                   TYPE        /BOBF/CONF_EDIT_MODE (default =/BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY)
 * | [<-()] RR_DATA                        TYPE REF TO DATA
+* | [!CX!] /BOBF/CX_DAC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method GET_NODE_TABLE.
   DATA lt_key       TYPE /bobf/t_frw_key.
   DATA ls_node_conf TYPE /bobf/s_confro_node.
   DATA lo_change    TYPE REF TO /bobf/if_tra_change.
-
   DATA lo_message   TYPE REF TO /bobf/if_frw_message.
 
   FIELD-SYMBOLS <ls_key> LIKE LINE OF lt_key.
@@ -443,7 +468,12 @@ method GET_NODE_TABLE.
 
   IF lo_message IS BOUND.
     IF lo_message->check( ) EQ abap_true.
-      "display_messages( lo_message ).
+*      me->convert_messages(
+*        EXPORTING
+*          io_message = lo_message
+*        IMPORTING
+*          et_message = et_message
+*      ).
       RAISE EXCEPTION TYPE /bobf/cx_dac.
     ENDIF.
   ENDIF.
@@ -458,6 +488,7 @@ endmethod.
 * | [--->] IV_ASSOC_KEY                   TYPE        /BOBF/OBM_ASSOC_KEY
 * | [--->] IV_EDIT_MODE                   TYPE        /BOBF/CONF_EDIT_MODE (default =/BOBF/IF_CONF_C=>SC_EDIT_READ_ONLY)
 * | [<-()] RR_DATA                        TYPE REF TO DATA
+* | [!CX!] /BOBF/CX_DAC
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method GET_NODE_TABLE_BY_ASSOC.
   DATA lt_key         TYPE /bobf/t_frw_key.
@@ -549,33 +580,34 @@ endmethod.
 * | Instance Public Method ZCL_BOPF_SO_API->READ_ALL
 * +-------------------------------------------------------------------------------------------------+
 * | [<---] ET_HEADER                      TYPE        ZBO_SOHEADER_CTT
-* | [<---] ET_ITEM                        TYPE        ZBO_SOITEM_CTT
 * | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method READ_ALL.
-  DATA lv_soid_key TYPE /bobf/conf_key.
-  DATA lx_bopf_ex      TYPE REF TO /bobf/cx_frw.
-  DATA lv_err_msg      TYPE string.
-  DATA ls_item         LIKE LINE OF et_item.
-  DATA ls_message      LIKE LINE OF et_message.
-
-  DATA lr_t_root TYPE REF TO zbo_soheader_ctt.
-  DATA lr_s_root TYPE REF TO zbo_soheader_cb.
-  DATA lr_s_item TYPE REF TO zbo_soitem_cs.
-
-  DATA lt_data TYPE REF TO data.
-
-  FIELD-SYMBOLS: <lt_data> TYPE STANDARD TABLE.
+  DATA lo_message TYPE REF TO /bobf/if_frw_message.
 
   CLEAR et_header.
-  CLEAR et_item.
   CLEAR et_message.
 
-  lr_t_root ?= me->get_node_table(
+  mo_svc_mngr->query(
     EXPORTING
-      iv_key       = CONV #( '' )
-      iv_node_key  = zif_zbo_so_c=>sc_node-root
+      iv_query_key = zif_zbo_so_c=>sc_query-root-select_all
+      iv_fill_data = abap_true
+    IMPORTING
+      eo_message   = lo_message
+      et_data      = et_header
   ).
+
+  IF lo_message IS BOUND.
+    IF lo_message->check( ) EQ abap_true.
+      me->convert_messages(
+        EXPORTING
+          io_message = lo_message
+        IMPORTING
+          et_message = et_message
+      ).
+      RETURN.
+    ENDIF.
+  ENDIF.
 endmethod.
 
 
@@ -589,10 +621,10 @@ endmethod.
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method READ_SINGLE.
   DATA lv_soid_key TYPE /bobf/conf_key.
-  DATA lx_bopf_ex      TYPE REF TO /bobf/cx_frw.
-  DATA lv_err_msg      TYPE string.
-  DATA ls_item         LIKE LINE OF et_item.
-  DATA ls_message      LIKE LINE OF et_message.
+  DATA lx_bopf_ex  TYPE REF TO /bobf/cx_frw.
+  DATA lv_err_msg  TYPE string.
+  DATA ls_item     LIKE LINE OF et_item.
+  DATA ls_message  LIKE LINE OF et_message.
 
   DATA lr_s_root TYPE REF TO zbo_soheader_cb.
   DATA lr_s_item TYPE REF TO zbo_soitem_cs.
@@ -638,7 +670,6 @@ method READ_SINGLE.
         iv_key       = lv_soid_key
         iv_node_key  = zif_zbo_so_c=>sc_node-root
         iv_assoc_key = zif_zbo_so_c=>sc_association-root-item
-        "iv_index    = sy-index
       RECEIVING
         rr_data      = lt_data
     ).
@@ -677,22 +708,22 @@ endmethod.
 * | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method UPDATE.
-  DATA lv_soid_key TYPE /bobf/conf_key.
-  DATA lt_mod          TYPE /bobf/t_frw_modification.
-  DATA lo_change       TYPE REF TO /bobf/if_tra_change.
-  DATA lo_message      TYPE REF TO /bobf/if_frw_message.
-  DATA lv_rejected     TYPE boole_d.
-  DATA lx_bopf_ex      TYPE REF TO /bobf/cx_frw.
-  DATA lv_err_msg      TYPE string.
+  DATA lv_soid_key   TYPE /bobf/conf_key.
+  DATA lt_mod        TYPE /bobf/t_frw_modification.
+  DATA lo_change     TYPE REF TO /bobf/if_tra_change.
+  DATA lo_message    TYPE REF TO /bobf/if_frw_message.
+  DATA lv_rejected   TYPE boole_d.
+  DATA lx_bopf_ex    TYPE REF TO /bobf/cx_frw.
+  DATA lv_err_msg    TYPE string.
 
-  DATA lr_s_root       TYPE REF TO zbo_soheader_cb.
-  DATA lr_s_item       TYPE REF TO zbo_soitem_cs.
-  DATA ls_message      LIKE LINE OF et_message.
-  DATA ls_item         LIKE LINE OF it_item.
+  DATA lr_s_root     TYPE REF TO zbo_soheader_cb.
+  DATA lr_s_item     TYPE REF TO zbo_soitem_cs.
+  DATA ls_message    LIKE LINE OF et_message.
+  DATA ls_item       LIKE LINE OF it_item.
 
-  DATA ls_header_ori   TYPE zbo_soheader_cb.
-  DATA lt_item_ori     TYPE zbo_soitem_ctt.
-  DATA ls_item_ori     LIKE LINE OF lt_item_ori.
+  DATA ls_header_ori TYPE zbo_soheader_cb.
+  DATA lt_item_ori   TYPE zbo_soitem_ctt.
+  DATA ls_item_ori   LIKE LINE OF lt_item_ori.
 
   FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
 
@@ -704,8 +735,6 @@ method UPDATE.
         es_header  = ls_header_ori
         et_item    = lt_item_ori
     ).
-
-    "lv_soid_key = me->get_soid_key( is_header-soid ).
 
     lr_s_root ?= me->get_node_row(
       iv_key       = ls_header_ori-key
@@ -769,7 +798,6 @@ method UPDATE.
     LOOP AT lt_item_ori INTO ls_item_ori.
       READ TABLE it_item INTO ls_item WITH KEY itemid = ls_item_ori-itemid.
       IF sy-subrc = 4.
-        " atualização de item
         APPEND INITIAL LINE TO lt_mod ASSIGNING <ls_mod>.
         <ls_mod>-node        = zif_zbo_so_c=>sc_node-item.
         <ls_mod>-change_mode = /bobf/if_frw_c=>sc_modify_delete.
@@ -814,7 +842,7 @@ method UPDATE.
 
     CLEAR ls_message.
     ls_message-type    = 'S'.
-    ls_message-message = 'Dados atualizados'.
+    ls_message-message = 'Instância atualizada'.
     APPEND ls_message TO et_message.
   CATCH /bobf/cx_frw INTO lx_bopf_ex.
     lv_err_msg = lx_bopf_ex->get_text( ).
