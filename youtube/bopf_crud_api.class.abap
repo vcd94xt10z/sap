@@ -591,6 +591,7 @@ method READ_ALL.
   mo_svc_mngr->query(
     EXPORTING
       iv_query_key = zif_zbo_so_c=>sc_query-root-select_all
+      "iv_query_key = zif_zbo_so_c=>sc_query-root-select_by_element
       iv_fill_data = abap_true
     IMPORTING
       eo_message   = lo_message
