@@ -1,3 +1,7 @@
+*
+* Autor Vinicius Cesar Dias
+* Versão 0.1
+*
 class ZCL_BOPF_SO_API definition
   public
   create public .
@@ -163,6 +167,8 @@ method CREATE.
 
   FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
 
+  CLEAR et_message.
+
   TRY.
     " cabeçalho
     CREATE DATA lr_s_root.
@@ -272,6 +278,8 @@ method DELETE.
   DATA ls_item_ori   LIKE LINE OF lt_item_ori.
 
   FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
+
+  CLEAR et_message.
 
   TRY.
     me->read_single(
@@ -727,6 +735,8 @@ method UPDATE.
   DATA ls_item_ori   LIKE LINE OF lt_item_ori.
 
   FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
+
+  CLEAR et_message.
 
   TRY.
     me->read_single(
