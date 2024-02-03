@@ -11,7 +11,11 @@ public section.
       !IT_ITEM type ZBO_SOITEM_DS_TAB
     exporting
       !ET_MESSAGE type BAPIRET2_T .
-  methods DELETE .
+  methods DELETE
+    importing
+      !ID_SOID type INT4
+    exporting
+      !ET_MESSAGE type BAPIRET2_T .
   methods READ_SINGLE
     importing
       !ID_SOID type INT4
@@ -19,7 +23,11 @@ public section.
       !ES_HEADER type ZBO_SOHEADER_CB
       !ET_ITEM type ZBO_SOITEM_CTT
       !ET_MESSAGE type BAPIRET2_T .
-  methods READ_ALL .
+  methods READ_ALL
+    exporting
+      !ET_HEADER type ZBO_SOHEADER_CTT
+      !ET_ITEM type ZBO_SOITEM_CTT
+      !ET_MESSAGE type BAPIRET2_T .
   methods UPDATE
     importing
       !IS_HEADER type ZBO_SOHEADER_DS
@@ -226,9 +234,96 @@ endmethod.
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Instance Public Method ZCL_BOPF_SO_API->DELETE
 * +-------------------------------------------------------------------------------------------------+
+* | [--->] ID_SOID                        TYPE        INT4
+* | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
-  method DELETE.
-  endmethod.
+method DELETE.
+  DATA lt_mod          TYPE /bobf/t_frw_modification.
+  DATA lo_change       TYPE REF TO /bobf/if_tra_change.
+  DATA lo_message      TYPE REF TO /bobf/if_frw_message.
+  DATA lv_rejected     TYPE boole_d.
+  DATA lx_bopf_ex      TYPE REF TO /bobf/cx_frw.
+  DATA lv_err_msg      TYPE string.
+
+  DATA lr_s_root       TYPE REF TO zbo_soheader_cb.
+  DATA lr_s_item       TYPE REF TO zbo_soitem_cs.
+  DATA ls_message      LIKE LINE OF et_message.
+
+  DATA ls_header_ori   TYPE zbo_soheader_cb.
+  DATA lt_item_ori     TYPE zbo_soitem_ctt.
+  DATA ls_item_ori     LIKE LINE OF lt_item_ori.
+
+  FIELD-SYMBOLS: <ls_mod> LIKE LINE OF lt_mod.
+
+  TRY.
+    me->read_single(
+      EXPORTING
+        id_soid    = id_soid
+      IMPORTING
+        es_header  = ls_header_ori
+        et_item    = lt_item_ori
+    ).
+
+    lr_s_root ?= me->get_node_row(
+      iv_key       = ls_header_ori-key
+      iv_node_key  = zif_zbo_so_c=>sc_node-root
+      iv_edit_mode = /bobf/if_conf_c=>sc_edit_exclusive
+      iv_index     = 1
+    ).
+
+    APPEND INITIAL LINE TO lt_mod ASSIGNING <ls_mod>.
+    <ls_mod>-node        = zif_zbo_so_c=>sc_node-root.
+    <ls_mod>-change_mode = /bobf/if_frw_c=>sc_modify_delete.
+    <ls_mod>-key         = lr_s_root->key.
+    <ls_mod>-data        = lr_s_root.
+
+    CALL METHOD me->mo_svc_mngr->modify
+      EXPORTING
+        it_modification = lt_mod
+      IMPORTING
+        eo_change       = lo_change
+        eo_message      = lo_message.
+
+    IF lo_message IS BOUND.
+      IF lo_message->check( ) EQ abap_true.
+        me->convert_messages(
+          EXPORTING
+            io_message = lo_message
+          IMPORTING
+            et_message = et_message
+        ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    CALL METHOD me->mo_txn_mngr->save
+      IMPORTING
+        eo_message  = lo_message
+        ev_rejected = lv_rejected.
+
+    IF lv_rejected EQ abap_true.
+      me->convert_messages(
+        EXPORTING
+          io_message = lo_message
+        IMPORTING
+          et_message = et_message
+      ).
+      RETURN.
+    ENDIF.
+
+    CLEAR ls_message.
+    ls_message-type    = 'S'.
+    ls_message-message = 'Instância removida'.
+    APPEND ls_message TO et_message.
+  CATCH /bobf/cx_frw INTO lx_bopf_ex.
+    lv_err_msg = lx_bopf_ex->get_text( ).
+
+    CLEAR ls_message.
+    ls_message-type    = 'E'.
+    ls_message-message = lv_err_msg.
+    APPEND ls_message TO et_message.
+  ENDTRY.
+endmethod.
 
 
 * <SIGNATURE>---------------------------------------------------------------------------------------+
@@ -453,9 +548,35 @@ endmethod.
 * <SIGNATURE>---------------------------------------------------------------------------------------+
 * | Instance Public Method ZCL_BOPF_SO_API->READ_ALL
 * +-------------------------------------------------------------------------------------------------+
+* | [<---] ET_HEADER                      TYPE        ZBO_SOHEADER_CTT
+* | [<---] ET_ITEM                        TYPE        ZBO_SOITEM_CTT
+* | [<---] ET_MESSAGE                     TYPE        BAPIRET2_T
 * +--------------------------------------------------------------------------------------</SIGNATURE>
-  method READ_ALL.
-  endmethod.
+method READ_ALL.
+  DATA lv_soid_key TYPE /bobf/conf_key.
+  DATA lx_bopf_ex      TYPE REF TO /bobf/cx_frw.
+  DATA lv_err_msg      TYPE string.
+  DATA ls_item         LIKE LINE OF et_item.
+  DATA ls_message      LIKE LINE OF et_message.
+
+  DATA lr_t_root TYPE REF TO zbo_soheader_ctt.
+  DATA lr_s_root TYPE REF TO zbo_soheader_cb.
+  DATA lr_s_item TYPE REF TO zbo_soitem_cs.
+
+  DATA lt_data TYPE REF TO data.
+
+  FIELD-SYMBOLS: <lt_data> TYPE STANDARD TABLE.
+
+  CLEAR et_header.
+  CLEAR et_item.
+  CLEAR et_message.
+
+  lr_t_root ?= me->get_node_table(
+    EXPORTING
+      iv_key       = CONV #( '' )
+      iv_node_key  = zif_zbo_so_c=>sc_node-root
+  ).
+endmethod.
 
 
 * <SIGNATURE>---------------------------------------------------------------------------------------+
@@ -486,6 +607,13 @@ method READ_SINGLE.
 
   TRY.
     lv_soid_key = me->get_soid_key( id_soid = id_soid ).
+    IF lv_soid_key IS INITIAL.
+      CLEAR ls_message.
+      ls_message-type    = 'E'.
+      ls_message-message = 'Registro não encontrado'.
+      APPEND ls_message TO et_message.
+      RETURN.
+    ENDIF.
 
     lr_s_root ?= me->get_node_row(
       iv_key      = lv_soid_key
@@ -614,23 +742,39 @@ method UPDATE.
       lr_s_item->price_tot  = lr_s_item->price_uni * lr_s_item->quantity.
 
       IF lr_s_item->key IS INITIAL.
+        " criação de item
         lr_s_item->key        = /bobf/cl_frw_factory=>get_new_key( ).
         lr_s_item->parent_key = lr_s_root->key.
         lr_s_item->root_key   = lr_s_root->key.
 
-       <ls_mod>-node        = zif_zbo_so_c=>sc_node-item.
-       <ls_mod>-change_mode = /bobf/if_frw_c=>sc_modify_create.
-       <ls_mod>-source_node = zif_zbo_so_c=>sc_node-root.
-       <ls_mod>-association = zif_zbo_so_c=>sc_association-root-item.
-       <ls_mod>-source_key  = lr_s_root->key.
-       <ls_mod>-key         = lr_s_item->key.
-       <ls_mod>-data        = lr_s_item.
+        APPEND INITIAL LINE TO lt_mod ASSIGNING <ls_mod>.
+        <ls_mod>-node        = zif_zbo_so_c=>sc_node-item.
+        <ls_mod>-change_mode = /bobf/if_frw_c=>sc_modify_create.
+        <ls_mod>-source_node = zif_zbo_so_c=>sc_node-root.
+        <ls_mod>-association = zif_zbo_so_c=>sc_association-root-item.
+        <ls_mod>-source_key  = lr_s_root->key.
+        <ls_mod>-key         = lr_s_item->key.
+        <ls_mod>-data        = lr_s_item.
       ELSE.
+        " atualização de item
         APPEND INITIAL LINE TO lt_mod ASSIGNING <ls_mod>.
         <ls_mod>-node        = zif_zbo_so_c=>sc_node-item.
         <ls_mod>-change_mode = /bobf/if_frw_c=>sc_modify_update.
         <ls_mod>-key         = lr_s_item->key.
         <ls_mod>-data        = lr_s_item.
+      ENDIF.
+    ENDLOOP.
+
+    " remoção de item
+    LOOP AT lt_item_ori INTO ls_item_ori.
+      READ TABLE it_item INTO ls_item WITH KEY itemid = ls_item_ori-itemid.
+      IF sy-subrc = 4.
+        " atualização de item
+        APPEND INITIAL LINE TO lt_mod ASSIGNING <ls_mod>.
+        <ls_mod>-node        = zif_zbo_so_c=>sc_node-item.
+        <ls_mod>-change_mode = /bobf/if_frw_c=>sc_modify_delete.
+        <ls_mod>-key         = ls_item_ori-key.
+        <ls_mod>-data        = REF #( ls_item_ori ).
       ENDIF.
     ENDLOOP.
 
