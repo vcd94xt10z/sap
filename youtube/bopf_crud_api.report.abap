@@ -4,21 +4,18 @@ START-OF-SELECTION.
   DATA: lo_api     TYPE REF TO zcl_bopf_so_api.
   DATA: lt_message TYPE bapiret2_t.
 
-  DATA: ls_header  TYPE zbo_soheader_ds.
-  DATA: lt_item    TYPE zbo_soitem_ds_tab.
-  DATA: ls_item    TYPE zbo_soitem_ds.
-
-  DATA: ls_header2 TYPE zbo_soheader_cb.
-  DATA: lt_header2 TYPE zbo_soheader_ctt.
-  DATA: lt_item2   TYPE zbo_soitem_ctt.
+  DATA: lt_header  TYPE zbo_soheader_ctt.
+  DATA: ls_header  TYPE zbo_soheader_cb.
+  DATA: lt_item    TYPE zbo_soitem_ctt.
+  DATA: ls_item    TYPE zbo_soitem_cs.
 
   lo_api = new zcl_bopf_so_api( ).
 
   BREAK-POINT.
-  "PERFORM create.
+  PERFORM create.
   PERFORM read.
-  "PERFORM update.
-  "PERFORM delete.
+  PERFORM update.
+  PERFORM delete.
 
 FORM create.
   CLEAR ls_header.
@@ -57,10 +54,10 @@ ENDFORM.
 FORM read.
   lo_api->read_single(
     EXPORTING
-      id_soid    = 45
+      id_soid    = 1
     IMPORTING
-      es_header  = ls_header2
-      et_item    = lt_item2
+      es_header  = ls_header
+      et_item    = lt_item
       et_message = lt_message
   ).
 
@@ -70,14 +67,13 @@ FORM read.
 
   lo_api->read_all(
     IMPORTING
-      et_header  = lt_header2
-      et_item    = lt_item2
+      et_header  = lt_header
       et_message = lt_message
   ).
 ENDFORM.
 FORM update.
   CLEAR ls_header.
-  ls_header-soid       = 45.
+  ls_header-soid       = 1.
   ls_header-customerid = '90'.
   ls_header-status     = 'F'.
 
@@ -123,7 +119,7 @@ ENDFORM.
 FORM delete.
   lo_api->delete(
     EXPORTING
-      id_soid    = 45
+      id_soid    = 1
     IMPORTING
       et_message = lt_message
   ).
