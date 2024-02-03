@@ -1,6 +1,6 @@
 *
 * Autor Vinicius Cesar Dias
-* Versão 0.1
+* Versão 0.2
 *
 REPORT ZBOPF.
 
@@ -20,6 +20,7 @@ START-OF-SELECTION.
   PERFORM read.
   PERFORM update.
   PERFORM delete.
+  PERFORM action.
 
 FORM create.
   CLEAR lt_item.
@@ -136,6 +137,20 @@ FORM delete.
   lo_api->delete(
     EXPORTING
       id_soid    = 45
+    IMPORTING
+      et_message = lt_message
+  ).
+
+  CALL FUNCTION 'RSCRMBW_DISPLAY_BAPIRET2'
+    TABLES
+      it_return = lt_message.
+ENDFORM.
+FORM action.
+  CLEAR lt_message.
+  lo_api->action(
+    EXPORTING
+      id_action  = ZIF_ZBO_SO_C=>sc_action-root-fornecer
+      id_soid    = 46
     IMPORTING
       et_message = lt_message
   ).
