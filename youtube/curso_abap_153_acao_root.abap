@@ -46,7 +46,7 @@ method /BOBF/IF_FRW_ACTION~EXECUTE.
             EXPORTING
               is_msg       = value #(
                 msgid = 'ACM'
-                msgno = '000'
+                msgno = '001'
                 msgv1 = 'Status deve ser 2 (FORNECIDO)'
               )
               iv_node      = is_ctx-node_key
