@@ -12,7 +12,6 @@ method /BOBF/IF_FRW_VALIDATION~EXECUTE.
       iv_fill_data            = abap_true
       it_requested_attributes = VALUE #(
         ( zif_zbo_so_c=>sc_node_attribute-root-customerid )
-        ( zif_zbo_so_c=>sc_node_attribute-root-status )
       )
     IMPORTING
       et_data                 = lt_data
