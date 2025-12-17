@@ -1,0 +1,303 @@
+FUNCTION J_1B_NF_DOCUMENT_READ.
+*"----------------------------------------------------------------------
+*"*"Local interface:
+*"  IMPORTING
+*"     VALUE(DOC_NUMBER) LIKE  J_1BNFDOC-DOCNUM
+*"  EXPORTING
+*"     VALUE(DOC_HEADER) LIKE  J_1BNFDOC STRUCTURE  J_1BNFDOC
+*"     REFERENCE(DOC_TEXTS) TYPE REF TO IF_LOGBR_NF_TEXTS_DATA
+*"  TABLES
+*"      DOC_PARTNER STRUCTURE  J_1BNFNAD
+*"      DOC_ITEM STRUCTURE  J_1BNFLIN
+*"      DOC_ITEM_TAX STRUCTURE  J_1BNFSTX
+*"      DOC_HEADER_MSG STRUCTURE  J_1BNFFTX
+*"      DOC_REFER_MSG STRUCTURE  J_1BNFREF
+*"      DOC_OT_PARTNER STRUCTURE  J_1BNFCPD OPTIONAL
+*"      DOC_IMPORT_DI STRUCTURE  J_1BNFIMPORT_DI OPTIONAL
+*"      DOC_IMPORT_ADI STRUCTURE  J_1BNFIMPORT_ADI OPTIONAL
+*"      DOC_CTE_RES STRUCTURE  J_1BCTE_D_RES OPTIONAL
+*"      DOC_CTE_DOCREF STRUCTURE  J_1BCTE_D_DOCREF OPTIONAL
+*"      DOC_TRANS_VOLUMES STRUCTURE  J_1BNFTRANSVOL OPTIONAL
+*"      DOC_TRAILER_INFO STRUCTURE  J_1BNFTRAILER OPTIONAL
+*"      DOC_TRADE_NOTES STRUCTURE  J_1BNFTRADENOTES OPTIONAL
+*"      DOC_ADD_INFO STRUCTURE  J_1BNFADD_INFO OPTIONAL
+*"      DOC_REF_PROC STRUCTURE  J_1BNFREFPROC OPTIONAL
+*"      DOC_SUGAR_SUPPL STRUCTURE  J_1BNFSUGARSUPPL OPTIONAL
+*"      DOC_SUGAR_DEDUC STRUCTURE  J_1BNFSUGARDEDUC OPTIONAL
+*"      DOC_VEHICLE STRUCTURE  J_1BNFVEHICLE OPTIONAL
+*"      DOC_PHARMACEUT STRUCTURE  J_1BNFPHARMACEUT OPTIONAL
+*"      DOC_FUEL STRUCTURE  J_1BNFFUEL OPTIONAL
+*"      DOC_EXPORT STRUCTURE  J_1BNFE_EXPORT OPTIONAL
+*"      DOC_NVE STRUCTURE  J_1BNFNVE OPTIONAL
+*"      DOC_TRACEABILITY STRUCTURE  J_1BNFETRACE OPTIONAL
+*"      DOC_PHARMA STRUCTURE  J_1BNFEPHARMA OPTIONAL
+*"      DOC_PAYMENT STRUCTURE  J_1BNFEPAYMENT OPTIONAL
+*"      DOC_TEC_RESP STRUCTURE  J_1BNFE_TEC_RESP OPTIONAL
+*"      DOC_DUE STRUCTURE  LOGBR_NF_DUE OPTIONAL
+*"      DOC_ADD_INFLIN STRUCTURE  J_1BNFADD_INFLIN OPTIONAL
+*"      DOC_DOCREF STRUCTURE  J_1BNF_DOCREF OPTIONAL
+*"      DOC_FUELORIGIN STRUCTURE  J_1BNFFUELORIGIN OPTIONAL
+*"      DOC_PRESUMED_CREDIT STRUCTURE  J_1BNFPRSMD_CRDT OPTIONAL
+*"      DOC_AGRICULTURE_DEFEN STRUCTURE  J_1BNFAGRI_DEFEN OPTIONAL
+*"      DOC_NFSE_DOCREF STRUCTURE  J_1BNFSE_DOCREF OPTIONAL
+*"  EXCEPTIONS
+*"      DOCUMENT_NOT_FOUND
+*"      DOCUM_LOCK
+*"      PARTNER_BLOCKED
+*"----------------------------------------------------------------------
+
+*
+*      Read Header
+*
+  SELECT SINGLE * INTO DOC_HEADER FROM J_1BNFDOC
+                  WHERE DOCNUM EQ DOC_NUMBER.
+
+  IF SY-SUBRC NE 0.
+    MESSAGE E106 WITH DOC_NUMBER
+            RAISING DOCUMENT_NOT_FOUND.
+  ENDIF.
+
+*  Check if main partner is blocked                                          "2540387
+  IF cl_j_1b_dpp=>get_instance( )->is_partner_blocked(                       "2540387
+                                      iv_partner_id = doc_header-parid       "2540387
+                                      iv_partner_type = doc_header-partyp    "2540387
+                                   ).                                        "2540387
+    MESSAGE E056(J1B_ERP) RAISING partner_blocked.                           "2540387
+  ENDIF.                                                                     "2540387
+*
+*     Read Partners
+*
+  SELECT * FROM J_1BNFNAD INTO TABLE DOC_PARTNER
+           WHERE DOCNUM EQ DOC_NUMBER
+           ORDER BY PRIMARY KEY.
+  DATA ls_nf_partner TYPE j_1bnfnad.                                          "2540387
+  LOOP AT doc_partner INTO ls_nf_partner.                                     "2540387
+*   Check if partner is blocked                                               "2540387
+    IF cl_j_1b_dpp=>get_instance( )->is_partner_blocked(                      "2540387
+                                       iv_partner_id = ls_nf_partner-parid    "2540387
+                                       iv_partner_type = ls_nf_partner-partyp "2540387
+                                    ).                                        "2540387
+      MESSAGE E056(J1B_ERP) RAISING partner_blocked.                          "2540387
+    ENDIF.                                                                    "2540387
+  ENDLOOP.                                                                    "2540387
+*
+*     Read One-time Account Data
+*
+  SELECT * FROM J_1BNFCPD INTO TABLE DOC_OT_PARTNER
+           WHERE DOCNUM EQ DOC_NUMBER
+           ORDER BY PRIMARY KEY.
+
+*
+*      Read Items
+*
+  SELECT * FROM J_1BNFLIN INTO TABLE DOC_ITEM
+           WHERE DOCNUM EQ DOC_NUMBER
+           ORDER BY PRIMARY KEY.
+
+*
+*      Read Item Taxes
+*
+  SELECT * FROM J_1BNFSTX INTO TABLE DOC_ITEM_TAX
+           WHERE DOCNUM EQ DOC_NUMBER
+           ORDER BY PRIMARY KEY.
+
+*
+*      Read Texts
+*
+  DATA texts_da TYPE REF TO if_logbr_nf_texts_da.
+  texts_da = NEW logbr_nf_texts_da( ).
+  doc_texts = texts_da->read( docnum   = doc_number
+                              language = doc_header-spras_bupla ).
+
+*
+*      Read Header Messages
+*
+  SELECT * FROM J_1BNFFTX INTO TABLE DOC_HEADER_MSG
+           WHERE DOCNUM EQ DOC_NUMBER
+           ORDER BY PRIMARY KEY.
+
+*
+*      Read reference to header messages
+*
+  SELECT * FROM J_1BNFREF INTO TABLE DOC_REFER_MSG
+           WHERE DOCNUM EQ DOC_NUMBER
+           ORDER BY PRIMARY KEY.
+
+*                                                          1590946
+*     Read Import Documents                                1590946
+*                                                          1590946
+  SELECT * FROM J_1BNFIMPORT_DI INTO TABLE DOC_IMPORT_DI  "1590946
+           WHERE DOCNUM EQ DOC_NUMBER                     "1590946
+           ORDER BY PRIMARY KEY.                          "1590946
+
+*     Read Additions to Import Documents and               1590946
+*     their Assignment to NF Itemes                        1590946
+*                                                          1590946
+  SELECT * FROM J_1BNFIMPORT_ADI INTO TABLE DOC_IMPORT_ADI"1590946
+           WHERE DOCNUM EQ DOC_NUMBER                     "1590946
+           ORDER BY PRIMARY KEY.                          "1590946
+
+  DATA LO_CTE_SWITCH TYPE REF TO CL_J_1BCTE_SWF.          "1638543
+  LO_CTE_SWITCH = CL_J_1BCTE_SWF=>GET_INSTANCE( ).        "1638543
+  IF LO_CTE_SWITCH->IS_CTE_CONTEXT( ) = ABAP_TRUE.        "1638543
+    SELECT * FROM J_1BCTE_D_RES INTO TABLE DOC_CTE_RES    "1638543
+             WHERE DOCNUM EQ DOC_NUMBER                   "1638543
+             ORDER BY PRIMARY KEY.                        "1638543
+                                                          "1638543
+    SELECT * FROM J_1BCTE_D_DOCREF INTO                   "1638543
+             TABLE DOC_CTE_DOCREF                         "1638543
+             WHERE DOCNUM EQ DOC_NUMBER                   "1638543
+             ORDER BY PRIMARY KEY.                        "1638543
+  ENDIF.                                                  "1638543
+
+*                                                          1844621
+*     Read Transported Volumes                             1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFTRANSVOL INTO TABLE DOC_TRANS_VOLUMES"1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Trailer Information                             1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFTRAILER INTO TABLE DOC_TRAILER_INFO "1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Trade Notes                                     1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFTRADENOTES INTO TABLE DOC_TRADE_NOTES"1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Free Usage Fields for Additional Information    1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFADD_INFO INTO TABLE DOC_ADD_INFO    "1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Information on Referenced Processes             1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFREFPROC INTO TABLE DOC_REF_PROC     "1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Information on Daily Supply of Sugarcane        1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFSUGARSUPPL INTO TABLE DOC_SUGAR_SUPPL"1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*  Read Information on axes and Contributions on Sugarcane 1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFSUGARDEDUC INTO TABLE DOC_SUGAR_DEDUC"1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Vehicle Details                                 1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFVEHICLE INTO TABLE DOC_VEHICLE      "1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Pharmaceutical Information                      1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFPHARMACEUT INTO TABLE DOC_PHARMACEUT"1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+*                                                          1844621
+*     Read Fuel Details                                    1844621
+*                                                          1844621
+  SELECT * FROM J_1BNFFUEL INTO TABLE DOC_FUEL            "1844621
+           WHERE DOCNUM EQ DOC_NUMBER                     "1844621
+           ORDER BY PRIMARY KEY.                          "1844621
+
+*                                                          1933985
+*     Read Export Documents                                1933985
+*                                                          1933985
+  SELECT * FROM J_1BNFE_EXPORT INTO TABLE DOC_EXPORT      "1933985
+           WHERE DOCNUM EQ DOC_NUMBER                     "1933985
+           ORDER BY PRIMARY KEY.                          "1933985
+
+*                                                          2046494
+*     Read NVE Numbers                                     2046494
+*                                                          2046494
+  SELECT * FROM J_1BNFNVE INTO TABLE DOC_NVE              "2046494
+           WHERE DOCNUM EQ DOC_NUMBER                     "2046494
+           ORDER BY PRIMARY KEY.                          "2046494
+
+*                                                          2459713
+*     Read  traceability data (NF-e 4.0)                   2459713
+*                                                          2459713
+  SELECT * FROM J_1BNFETRACE INTO TABLE DOC_TRACEABILITY  "2459713
+           WHERE DOCNUM EQ DOC_NUMBER                     "2459713
+           ORDER BY PRIMARY KEY.                          "2459713
+
+*                                                          2459713
+*     Read  pharma data (NF-e 4.0)                         2459713
+*                                                          2459713
+  SELECT * FROM J_1BNFEPHARMA INTO TABLE DOC_PHARMA       "2459713
+           WHERE DOCNUM EQ DOC_NUMBER                     "2459713
+           ORDER BY PRIMARY KEY.                          "2459713
+
+*                                                          2459713
+*     Read  payment data (NF-e 4.0)                        2459713
+*                                                          2459713
+  SELECT * FROM J_1BNFEPAYMENT INTO TABLE DOC_PAYMENT     "2459713
+           WHERE DOCNUM EQ DOC_NUMBER                     "2459713
+           ORDER BY PRIMARY KEY.                          "2459713
+
+*                                                          2747190
+*     Read  Technical Responsible                          2747190
+*                                                          2747190
+  SELECT * FROM J_1BNFE_TEC_RESP INTO TABLE DOC_TEC_RESP  "2747190
+           WHERE DOCNUM EQ DOC_NUMBER                     "2747190
+           ORDER BY PRIMARY KEY.                          "2747190
+
+*
+*     Read  Nota Fiscal Export Declaration
+*
+  SELECT * FROM logbr_nf_due INTO TABLE doc_due
+           WHERE docnum EQ doc_number
+           ORDER BY PRIMARY KEY.
+
+*                                                               3146447
+*     Read Free Usage Fields for Item Additional Information    3146447
+*                                                               3146447
+  SELECT * FROM J_1BNFADD_INFLIN INTO TABLE DOC_ADD_INFLIN     "3146447
+           WHERE DOCNUM EQ DOC_NUMBER                          "3146447
+           ORDER BY PRIMARY KEY.                               "3146447
+
+*                                                                3295909
+*     Read Nota Fiscal Document Reference                        3295909
+*                                                                3295909
+  DOC_DOCREF[] = NEW J_1BNF_DOCREF_DA( )->SELECT( DOC_NUMBER ). "3295909
+
+*                                                                3310182
+*     Read Fuel Origin Indicator                                 3310182
+*                                                                3310182
+  DATA FUELORIGIN_DA TYPE REF TO J_1BNFFUELORIGIN_DA.           "3310182
+  CREATE OBJECT FUELORIGIN_DA.                                  "3310182
+  DOC_FUELORIGIN[] = FUELORIGIN_DA->SELECT( DOC_NUMBER ).       "3310182
+
+*                                                                    "3423952
+*     Read  Presumed Credit                                          "3423952
+*                                                                    "3423952
+  DATA PRESUMED_CREDIT_DA TYPE REF TO J_1BNFPRSMD_CRDT_DA.           "3423952
+  CREATE OBJECT PRESUMED_CREDIT_DA.                                  "3423952
+  DOC_PRESUMED_CREDIT[] = PRESUMED_CREDIT_DA->SELECT( DOC_NUMBER ).  "3423952
+
+*                                                               "3560477
+*     Read  Agriculture Defensives                              "3560477
+*                                                               "3560477
+  DATA AGRI_DEFEN_DA TYPE REF TO J_1BNFAGRI_DEFEN_DA.           "3560477
+  CREATE OBJECT AGRI_DEFEN_DA.                                  "3560477
+  DOC_AGRICULTURE_DEFEN[] = AGRI_DEFEN_DA->SELECT( DOC_NUMBER )."3560477
+
+*                                                               "3666872
+*     Read References for Service Nota Fiscal                   "3666872
+*                                                               "3666872
+  DATA NFSE_DOCREF_DA TYPE REF TO IF_LOGBR_NFSE_DOCREF_DA.      "3666872
+  CREATE OBJECT NFSE_DOCREF_DA TYPE LOGBR_NFSE_DOCREF_DA.       "3666872
+  DOC_NFSE_DOCREF[] = NFSE_DOCREF_DA->SELECT( DOC_NUMBER ).     "3666872
+
+ENDFUNCTION.
