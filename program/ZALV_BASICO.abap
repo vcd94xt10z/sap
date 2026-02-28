@@ -8,14 +8,19 @@ START-OF-SELECTION.
   "PERFORM exemplo2.
 
 FORM exemplo1.
-  DATA: lo_table     TYPE REF TO cl_salv_table.
-  DATA: lo_columns   TYPE REF TO cl_salv_columns_table.
-  DATA: lo_column    TYPE REF TO cl_salv_column.
-  DATA: lo_functions TYPE REF TO cl_salv_functions_list.
-  DATA: lo_display   TYPE REF TO cl_salv_display_settings.
-
-  DATA lo_layout_settings TYPE REF TO cl_salv_layout.
-  DATA ls_layout_key      TYPE salv_s_layout_key.
+  DATA: lo_table           TYPE REF TO cl_salv_table.
+  DATA: lo_sorts           TYPE REF TO cl_salv_sorts.
+  DATA: lo_column          TYPE REF TO cl_salv_column.
+  DATA: lo_columns         TYPE REF TO cl_salv_columns_table.
+  DATA: lo_display         TYPE REF TO cl_salv_display_settings.
+  DATA: lo_functions       TYPE REF TO cl_salv_functions_list.
+  DATA: ls_layout_key      TYPE salv_s_layout_key.
+  DATA: lt_column_hide     TYPE STANDARD TABLE OF lvc_fname.
+  DATA: lt_column_agreg    TYPE STANDARD TABLE OF lvc_fname.
+  DATA: lt_column_sortup   TYPE STANDARD TABLE OF lvc_fname.
+  DATA: ld_column_name     TYPE lvc_fname.
+  DATA: lo_aggregations    TYPE REF TO cl_salv_aggregations.
+  DATA: lo_layout_settings TYPE REF TO cl_salv_layout.
 
   DATA: lt_result TYPE STANDARD TABLE OF stravelag.
 
@@ -47,12 +52,56 @@ FORM exemplo1.
   ls_layout_key-report = sy-repid.
   lo_layout_settings->set_key( ls_layout_key ).
   lo_layout_settings->set_save_restriction( if_salv_c_layout=>restrict_none ).
+  lo_layout_settings->set_initial_layout( value = 'DEFAULT' ). " nome do layout ALV
 
   " alterando propriedades de uma coluna (nome, alinhamento etc.)
   lo_column = lo_columns->get_column( 'NAME' ).
   lo_column->set_long_text( 'NAME' ).
   lo_column->set_alignment( IF_SALV_C_ALIGNMENT=>CENTERED ).
   "lo_column->set_visible( if_salv_c_bool_sap=>false ).
+
+  CLEAR lt_column_hide.
+  APPEND 'TEST01' TO lt_column_hide.
+  APPEND 'SUM01'  TO lt_column_hide.
+  
+  LOOP AT lt_column_hide INTO ld_column_name.
+    lo_column = lo_columns->get_column( ld_column_name ).
+    lo_column->set_visible( if_salv_c_bool_sap=>false ).
+  ENDLOOP.
+
+  CLEAR lt_column_agreg.
+  APPEND 'TOT01' TO lt_column_agreg.
+  APPEND 'TOT02' TO lt_column_agreg.
+
+  lo_aggregations = lo_table->get_aggregations( ).
+  LOOP AT lt_column_agreg INTO ld_column_name.
+    TRY.
+      CALL METHOD lo_aggregations->add_aggregation
+        EXPORTING
+          columnname  = ld_column_name
+          aggregation = if_salv_c_aggregation=>total.
+      CATCH cx_salv_not_found.
+      CATCH cx_salv_data_error.
+      CATCH cx_salv_existing.
+    ENDTRY.
+  ENDLOOP.
+
+  CLEAR lt_column_sortup.
+  APPEND 'MATNR' TO lt_column_sortup.
+  APPEND 'MAKTX' TO lt_column_sortup.
+  
+  lo_sorts = lo_table->get_sorts( ).
+  LOOP AT lt_column_sortup INTO ld_column_name.
+    TRY.
+      CALL METHOD lo_sorts->add_sort
+        EXPORTING
+          columnname = ld_column_name
+          sequence   = if_salv_c_sort=>sort_up.
+    CATCH cx_salv_not_found.
+    CATCH cx_salv_existing.
+    CATCH cx_salv_data_error.
+    ENDTRY.
+  ENDLOOP.
 
   lo_table->display( ).
 ENDFORM.
