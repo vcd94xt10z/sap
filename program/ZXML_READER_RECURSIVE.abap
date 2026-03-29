@@ -111,13 +111,6 @@ FORM read_xml.
       ld_value = lo_node->get_first_child( )->get_value( ).
     ENDIF.
 
-    CASE ld_type.
-    WHEN if_ixml_node=>co_node_text.
-      ld_type_name = 'text'.
-    WHEN if_ixml_node=>co_node_element.
-      ld_type_name = 'element'.
-    ENDCASE.
-
     IF ld_type = if_ixml_node=>co_node_element.
       ld_text = |{ ld_name }({ ld_type_name }) Atributos = { ld_attr_size }, Filhos { ld_children_length }|.
       WRITE ld_text.
