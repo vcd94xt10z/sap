@@ -4,26 +4,18 @@ class ZCL_DRC_UTILS definition
 
 public section.
 
-  class-methods GET_XMLTAG_CONTENT
-    importing
-      value(ID_BEGIN_TAG) type ANY
-      value(ID_END_TAG) type ANY
-      value(ID_XML) type ANY
-      value(ID_POSITION) type INT4
-    exporting
-      value(ED_CONTENT) type ANY .
-  class-methods GET_XML_CONTENT
-    importing
-      value(ID_ACCESS_KEY) type ANY
-      value(ID_TYPE) type CHAR3
-    exporting
-      value(ED_CONTENT) type STRING
-      value(ED_XCONTENT) type XSTRING .
   class-methods CONVERT_XSTRING_TO_STRING
     importing
       value(INXSTRING) type XSTRING
     returning
       value(OUTSTRING) type STRING .
+  class-methods GET_XMLTAG_CONTENT
+    importing
+      value(ID_BEGIN_TAG) type ANY
+      value(ID_END_TAG) type ANY
+      value(ID_XML) type ANY
+    exporting
+      value(ED_CONTENT) type ANY .
   class-methods GET_XMLTAG_CONTENT2
     importing
       value(ID_TAG) type STRING
@@ -32,6 +24,13 @@ public section.
       value(ID_XML) type STRING
     exporting
       value(ED_CONTENT) type STRING .
+  class-methods GET_XML_CONTENT
+    importing
+      value(ID_ACCESS_KEY) type ANY
+      value(ID_TYPE) type CHAR3
+    exporting
+      value(ED_CONTENT) type STRING
+      value(ED_XCONTENT) type XSTRING .
   class-methods GET_XML_STRING_BY_DOCUMENT
     importing
       value(IO_XML_DOC) type ref to IF_IXML_DOCUMENT
@@ -106,7 +105,6 @@ endmethod.
 * | [--->] ID_BEGIN_TAG                   TYPE        ANY
 * | [--->] ID_END_TAG                     TYPE        ANY
 * | [--->] ID_XML                         TYPE        ANY
-* | [--->] ID_POSITION                    TYPE        INT4
 * | [<---] ED_CONTENT                     TYPE        ANY
 * +--------------------------------------------------------------------------------------</SIGNATURE>
 method GET_XMLTAG_CONTENT.
@@ -119,14 +117,14 @@ method GET_XMLTAG_CONTENT.
   CLEAR ed_content.
 
   " posição do tag de abertura
-  SEARCH id_xml FOR id_begin_tag STARTING AT id_position ENDING AT id_position.
+  SEARCH id_xml FOR id_begin_tag.
   IF sy-subrc <> 0.
     RETURN.
   ENDIF.
   ld_index1 = sy-fdpos.
 
   " posição do tag de fechamento
-  SEARCH id_xml FOR id_end_tag STARTING AT id_position ENDING AT id_position.
+  SEARCH id_xml FOR id_end_tag.
   IF sy-subrc <> 0.
     RETURN.
   ENDIF.
