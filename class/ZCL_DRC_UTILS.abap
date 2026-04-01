@@ -34,6 +34,8 @@ public section.
        , retEvento TYPE my_retEnvEvento_RE
        , END OF my_retEnvEvento .
   types:
+    my_retEnvEvento_tab TYPE STANDARD TABLE OF my_retEnvEvento WITH DEFAULT KEY .
+  types:
     BEGIN OF my_xml_stack
        , nodeindex      TYPE int4
        , path           TYPE string
@@ -120,12 +122,22 @@ public section.
       value(IT_NFKEY) type MT_NFKEY
     exporting
       value(ET_NFITEM) type ZXNFE_INNFEIT_TAB .
-  class-methods GET_EVENT_XML
+  class-methods GET_EVENT
+    importing
+      value(IS_EDOCUMENTFILE) type EDOCUMENTFILE
+    exporting
+      value(ES_DATA) type MY_RETENVEVENTO .
+  class-methods GET_EVENTS
     importing
       value(ID_GUID) type EDOC_FILE_GUID
     exporting
-      value(ED_STRING_XML) type STRING
-      value(ES_DATA) type MY_RETENVEVENTO .
+      value(ET_DATA) type MY_RETENVEVENTO_TAB .
+  class-methods PARSE_DATETIME
+    importing
+      value(ID_DATETIME) type ANY
+    exporting
+      value(ED_DATETIME_STRING) type ANY
+      value(ED_TIMESTAMP) type TIMESTAMPL .
 protected section.
 private section.
 ENDCLASS.
@@ -320,63 +332,105 @@ endmethod.
 
 
 * <SIGNATURE>---------------------------------------------------------------------------------------+
-* | Static Public Method ZCL_DRC_UTILS=>GET_EVENT_XML
+* | Static Public Method ZCL_DRC_UTILS=>GET_EVENT
 * +-------------------------------------------------------------------------------------------------+
-* | [--->] ID_GUID                        TYPE        EDOC_FILE_GUID
-* | [<---] ED_STRING_XML                  TYPE        STRING
+* | [--->] IS_EDOCUMENTFILE               TYPE        EDOCUMENTFILE
 * | [<---] ES_DATA                        TYPE        MY_RETENVEVENTO
 * +--------------------------------------------------------------------------------------</SIGNATURE>
-method GET_EVENT_XML.
-  DATA: ls_edocumentfile  TYPE edocumentfile.
+method GET_EVENT.
+  DATA: ld_string_xml     TYPE string.
   DATA: ld_xml_inf_evento TYPE string.
 
-  CLEAR ls_edocumentfile.
+  CLEAR es_data.
 
-  SELECT SINGLE *
-    FROM edocumentfile
-    INTO ls_edocumentfile
-   WHERE file_guid = id_guid.
-
-  IF sy-subrc <> 0.
+  IF is_edocumentfile IS INITIAL.
     RETURN.
   ENDIF.
 
   convert_xstring_to_string(
     EXPORTING
-      inxstring = ls_edocumentfile-file_raw
+      inxstring = is_edocumentfile-file_raw
     RECEIVING
-      outstring = ed_string_xml
+      outstring = ld_string_xml
   ).
+
+  IF ld_string_xml = ''.
+    RETURN.
+  ENDIF.
 
   CLEAR es_data.
-  get_xmltag_content( EXPORTING id_begin_tag = '<idLote>'   id_end_tag = '</idLote>'   id_xml = ed_string_xml IMPORTING ed_content = es_data-idlote ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<tpAmb>'    id_end_tag = '</tpAmb>'    id_xml = ed_string_xml IMPORTING ed_content = es_data-tpamb ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<verAplic>' id_end_tag = '</verAplic>' id_xml = ed_string_xml IMPORTING ed_content = es_data-veraplic ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<cOrgao>'   id_end_tag = '</cOrgao>'   id_xml = ed_string_xml IMPORTING ed_content = es_data-corgao ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<cStat>'    id_end_tag = '</cStat>'    id_xml = ed_string_xml IMPORTING ed_content = es_data-cstat ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<xMotivo>'  id_end_tag = '</xMotivo>'  id_xml = ed_string_xml IMPORTING ed_content = es_data-xmotivo ).
+  get_xmltag_content( EXPORTING id_begin_tag = '<idLote>'   id_end_tag = '</idLote>'   id_xml = ld_string_xml IMPORTING ed_content = es_data-idlote ).
+  get_xmltag_content( EXPORTING id_begin_tag = '<tpAmb>'    id_end_tag = '</tpAmb>'    id_xml = ld_string_xml IMPORTING ed_content = es_data-tpamb ).
+  get_xmltag_content( EXPORTING id_begin_tag = '<verAplic>' id_end_tag = '</verAplic>' id_xml = ld_string_xml IMPORTING ed_content = es_data-veraplic ).
+  get_xmltag_content( EXPORTING id_begin_tag = '<cOrgao>'   id_end_tag = '</cOrgao>'   id_xml = ld_string_xml IMPORTING ed_content = es_data-corgao ).
+  get_xmltag_content( EXPORTING id_begin_tag = '<cStat>'    id_end_tag = '</cStat>'    id_xml = ld_string_xml IMPORTING ed_content = es_data-cstat ).
+  get_xmltag_content( EXPORTING id_begin_tag = '<xMotivo>'  id_end_tag = '</xMotivo>'  id_xml = ld_string_xml IMPORTING ed_content = es_data-xmotivo ).
 
-  get_xmltag_content3(
+  CLEAR ld_xml_inf_evento.
+  get_xmltag_content2(
     EXPORTING
-      id_open_tag  = '<infEvento>'
-      id_close_tag = '</infEvento>'
-      id_xml       = ed_string_xml
+      id_path    = '#document>nfeRecepcaoEventoNFResult>retEnvEvento>retEvento>infEvento'
+      id_index   = 1
+      id_xml     = ld_string_xml
     IMPORTING
-      ed_content   = ld_xml_inf_evento
+      ed_content = ld_xml_inf_evento
   ).
 
-  get_xmltag_content( EXPORTING id_begin_tag = '<tpAmb>'       id_end_tag = '</tpAmb>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-tpamb ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<verAplic>'    id_end_tag = '</verAplic>'    id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-veraplic ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<cOrgao>'      id_end_tag = '</cOrgao>'      id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-corgao ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<cStat>'       id_end_tag = '</cStat>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-cstat ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<xMotivo>'     id_end_tag = '</xMotivo>'     id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-xmotivo ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<chNFe>'       id_end_tag = '</chNFe>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-chnfe ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<tpEvento>'    id_end_tag = '</tpEvento>'    id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-tpevento ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<xEvento>'     id_end_tag = '</xEvento>'     id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-xevento ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<nSeqEvento>'  id_end_tag = '</nSeqEvento>'  id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-nseqevento ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<CNPJDest>'    id_end_tag = '</CNPJDest>'    id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-cnpjdest ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<dhRegEvento>' id_end_tag = '</dhRegEvento>' id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-dhregevento ).
-  get_xmltag_content( EXPORTING id_begin_tag = '<nProt>'       id_end_tag = '</nProt>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-nprot ).
+  IF ld_xml_inf_evento <> ''.
+    get_xmltag_content( EXPORTING id_begin_tag = '<tpAmb>'       id_end_tag = '</tpAmb>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-tpamb ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<verAplic>'    id_end_tag = '</verAplic>'    id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-veraplic ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<cOrgao>'      id_end_tag = '</cOrgao>'      id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-corgao ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<cStat>'       id_end_tag = '</cStat>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-cstat ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<xMotivo>'     id_end_tag = '</xMotivo>'     id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-xmotivo ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<chNFe>'       id_end_tag = '</chNFe>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-chnfe ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<tpEvento>'    id_end_tag = '</tpEvento>'    id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-tpevento ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<xEvento>'     id_end_tag = '</xEvento>'     id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-xevento ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<nSeqEvento>'  id_end_tag = '</nSeqEvento>'  id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-nseqevento ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<CNPJDest>'    id_end_tag = '</CNPJDest>'    id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-cnpjdest ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<dhRegEvento>' id_end_tag = '</dhRegEvento>' id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-dhregevento ).
+    get_xmltag_content( EXPORTING id_begin_tag = '<nProt>'       id_end_tag = '</nProt>'       id_xml = ld_xml_inf_evento IMPORTING ed_content = es_data-retevento-infevento-nprot ).
+
+    parse_datetime(
+      EXPORTING
+        id_datetime        = es_data-retevento-infevento-dhregevento
+      IMPORTING
+        ed_datetime_string = es_data-retevento-infevento-dhregevento
+    ).
+  ENDIF.
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_DRC_UTILS=>GET_EVENTS
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ID_GUID                        TYPE        EDOC_FILE_GUID
+* | [<---] ET_DATA                        TYPE        MY_RETENVEVENTO_TAB
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method GET_EVENTS.
+  DATA: lt_file TYPE STANDARD TABLE OF edocumentfile.
+  DATA: ls_file TYPE edocumentfile.
+  DATA: ls_data LIKE LINE OF et_data.
+
+  CLEAR et_data.
+
+  SELECT *
+    INTO TABLE lt_file
+    FROM edocumentfile
+   WHERE edoc_guid = id_guid
+     AND file_type = 'RECEVT_XML'
+    ORDER BY create_date DESCENDING
+             create_time DESCENDING.
+
+  LOOP AT lt_file INTO ls_file.
+    get_event(
+      EXPORTING
+        is_edocumentfile = ls_file
+      IMPORTING
+        es_data          = ls_data
+    ).
+
+    APPEND ls_data TO et_data.
+  ENDLOOP.
 endmethod.
 
 
@@ -952,5 +1006,38 @@ method LOAD_NFITEM.
       APPEND ls_nfitem TO et_nfitem.
     ENDDO.
   ENDLOOP.
+endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Static Public Method ZCL_DRC_UTILS=>PARSE_DATETIME
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] ID_DATETIME                    TYPE        ANY
+* | [<---] ED_DATETIME_STRING             TYPE        ANY
+* | [<---] ED_TIMESTAMP                   TYPE        TIMESTAMPL
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+method PARSE_DATETIME.
+  DATA: ld_string TYPE string.
+
+  CLEAR ed_timestamp.
+  CLEAR ed_datetime_string.
+
+  IF id_datetime = ''.
+    RETURN.
+  ENDIF.
+
+  IF strlen( id_datetime ) < 19.
+    RETURN.
+  ENDIF.
+
+  ld_string = id_datetime(19).
+  REPLACE ALL OCCURRENCES OF REGEX '[^0-9]' IN ld_string WITH ''.
+  IF ld_string = ''.
+    RETURN.
+  ENDIF.
+
+  ed_datetime_string = ld_string.
+
+  ed_timestamp = ed_datetime_string.
 endmethod.
 ENDCLASS.
